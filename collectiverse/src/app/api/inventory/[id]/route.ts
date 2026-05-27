@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { getSession, ensureUserId } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  let userId: string;
+  try { userId = await ensureUserId(session); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
+
   const item = await prisma.inventoryItem.findFirst({
-    where: { id: params.id, userId: session.sub },
+    where: { id: params.id, userId },
     include: {
       card: {
         include: {
@@ -28,9 +31,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  let userId: string;
+  try { userId = await ensureUserId(session); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
+
   // Verify ownership
   const existing = await prisma.inventoryItem.findFirst({
-    where: { id: params.id, userId: session.sub },
+    where: { id: params.id, userId },
   });
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -40,14 +46,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const updateData: any = {};
   for (const field of allowedFields) {
     if (data[field] !== undefined) {
-      if (field === 'acquisitionDate' && data[field]) {
-        updateData[field] = new Date(data[field]);
-      } else if (['purchasePrice', 'estimatedValue', 'askingPrice'].includes(field) && data[field] !== null) {
-        updateData[field] = parseFloat(data[field]);
-      } else if (field === 'quantity' && data[field] !== null) {
-        updateData[field] = parseInt(data[field]);
+      if (field === 'acquisitionDate') {
+        updateData[field] = data[field] ? new Date(data[field]) : null;
+      } else if (['purchasePrice', 'estimatedValue', 'askingPrice'].includes(field)) {
+        const val = data[field];
+        updateData[field] = (val === '' || val === null) ? null : parseFloat(val);
+      } else if (field === 'quantity') {
+        const val = data[field];
+        updateData[field] = (val === '' || val === null) ? 1 : parseInt(val);
       } else {
-        updateData[field] = data[field];
+        updateData[field] = data[field] || null;
       }
     }
   }
@@ -67,8 +75,11 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  let userId: string;
+  try { userId = await ensureUserId(session); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
+
   const existing = await prisma.inventoryItem.findFirst({
-    where: { id: params.id, userId: session.sub },
+    where: { id: params.id, userId },
   });
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { getSession, ensureUserId } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  let userId: string;
+  try { userId = await ensureUserId(session); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
 
   const url = req.nextUrl;
   const status = url.searchParams.get('status');
@@ -13,7 +16,7 @@ export async function GET(req: NextRequest) {
   const sort = url.searchParams.get('sort') || 'createdAt';
   const order = url.searchParams.get('order') || 'desc';
 
-  const where: any = { userId: session.sub };
+  const where: any = { userId };
   if (status) where.status = status;
   if (condition) where.condition = condition;
   if (search) {
@@ -51,6 +54,9 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  let userId: string;
+  try { userId = await ensureUserId(session); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
+
   const data = await req.json();
   const { cardId, quantity, condition, gradeCompany, gradeValue, certNumber, acquisitionDate, purchasePrice, estimatedValue, askingPrice, status, storageLocation, notes } = data;
 
@@ -64,7 +70,7 @@ export async function POST(req: NextRequest) {
 
   const item = await prisma.inventoryItem.create({
     data: {
-      userId: session.sub,
+      userId,
       cardId,
       quantity: quantity || 1,
       condition: condition || null,

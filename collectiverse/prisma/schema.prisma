@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Person {
+  id           String       @id @default(cuid())
+  displayName  String       @map("display_name")
+  aliases      String[]     @default([])
+  birthDate    String?      @map("birth_date")
+  biography    String?
+  achievements String[]     @default([])
+  hallOfFame   Boolean      @default(false) @map("hall_of_fame")
+  imageUrl     String?      @map("image_url")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  personTeams  PersonTeam[]
+  personSports PersonSport[]
+  cards        Card[]
+
+  @@map("persons")
+}
+
+model Sport {
+  id     String @id @default(cuid())
+  name   String @unique
+  league String?
+
+  teams        Team[]
+  sets         CardSet[]
+  personSports PersonSport[]
+
+  @@map("sports")
+}
+
+model Team {
+  id       String  @id @default(cuid())
+  name     String  @map("team_name")
+  sportId  String  @map("sport_id")
+  city     String?
+  colors   String[]  @default([])
+  logoUrl  String?   @map("logo_url")
+
+  sport       Sport        @relation(fields: [sportId], references: [id])
+  personTeams PersonTeam[]
+  cards       Card[]
+
+  @@map("teams")
+}
+
+model PersonTeam {
+  id        String  @id @default(cuid())
+  personId  String  @map("person_id")
+  teamId    String  @map("team_id")
+  startYear Int?    @map("start_year")
+  endYear   Int?    @map("end_year")
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("person_teams")
+}
+
+model PersonSport {
+  id       String @id @default(cuid())
+  personId String @map("person_id")
+  sportId  String @map("sport_id")
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  sport  Sport  @relation(fields: [sportId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, sportId])
+  @@map("person_sports")
+}
+
+model CardSet {
+  id           String   @id @default(cuid())
+  name         String
+  year         Int
+  manufacturer String?
+  sportId      String?  @map("sport_id")
+  releaseDate  String?  @map("release_date")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  sport Sport? @relation(fields: [sportId], references: [id])
+  cards Card[]
+
+  @@map("card_sets")
+}
+
+model Card {
+  id                    String   @id @default(cuid())
+  personId              String?  @map("person_id")
+  setId                 String?  @map("set_id")
+  teamId                String?  @map("team_id")
+  year                  Int?
+  cardNumber            String?  @map("card_number")
+  parallel              String?
+  rookie                Boolean  @default(false)
+  autograph             Boolean  @default(false)
+  relic                 Boolean  @default(false)
+  serialNumber          String?  @map("serial_number")
+  printRun              Int?     @map("print_run")
+  frontImageUrl         String?  @map("front_image_url")
+  backImageUrl          String?  @map("back_image_url")
+  qrCodeUrl             String?  @map("qr_code_url")
+  estimatedValue        Float?   @map("estimated_value")
+  gradingRecommendation String?  @map("grading_recommendation")
+  status                String   @default("hold")
+  inventoryLocation     String?  @map("inventory_location")
+  funFacts              String[] @default([]) @map("fun_facts")
+  whyItMatters          String?  @map("why_it_matters")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  person          Person?          @relation(fields: [personId], references: [id])
+  set             CardSet?         @relation(fields: [setId], references: [id])
+  team            Team?            @relation(fields: [teamId], references: [id])
+  grades          Grade[]
+  collectionCards CollectionCard[]
+  transactions    Transaction[]
+  qrScans         QrScan[]
+  media           CardMedia[]
+
+  @@map("cards")
+}
+
+model Grade {
+  id             String   @id @default(cuid())
+  cardId         String   @map("card_id")
+  gradingCompany String   @map("grading_company")
+  grade          String
+  certNumber     String?  @map("cert_number")
+  gradedDate     String?  @map("graded_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("grades")
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  ownerName   String   @map("owner_name")
+  title       String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  cards CollectionCard[]
+
+  @@map("collections")
+}
+
+model CollectionCard {
+  id           String @id @default(cuid())
+  collectionId String @map("collection_id")
+  cardId       String @map("card_id")
+  quantity     Int    @default(1)
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  card       Card       @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, cardId])
+  @@map("collection_cards")
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  cardId          String   @map("card_id")
+  purchasePrice   Float?   @map("purchase_price")
+  salePrice       Float?   @map("sale_price")
+  transactionDate String?  @map("transaction_date")
+  marketplace     String?
+  buyer           String?
+  seller          String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+model QrScan {
+  id        String   @id @default(cuid())
+  cardId    String   @map("card_id")
+  scannedAt DateTime @default(now()) @map("scanned_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("qr_scans")
+}
+
+model CardMedia {
+  id        String   @id @default(cuid())
+  cardId    String   @map("card_id")
+  type      String
+  url       String
+  caption   String?
+  platform  String?
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("card_media")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("admins")
+}

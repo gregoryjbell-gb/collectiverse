@@ -42,6 +42,39 @@ export async function requireAdmin(): Promise<SessionPayload> {
   return session;
 }
 
+/**
+ * Ensures a User record exists for the current session.
+ * If the session is from a legacy Admin login, creates a User record for them.
+ * Returns the User ID that can be used for inventory operations.
+ */
+export async function ensureUserId(session: SessionPayload): Promise<string> {
+  // Check if user exists
+  const existing = await prisma.user.findUnique({ where: { id: session.sub } });
+  if (existing) return existing.id;
+
+  // If logged in as admin, check admin table and create a user record
+  if (session.role === 'ADMIN') {
+    const admin = await prisma.admin.findUnique({ where: { id: session.sub } });
+    if (admin) {
+      const user = await prisma.user.upsert({
+        where: { username: admin.username },
+        update: {},
+        create: {
+          id: admin.id, // Use same ID so session stays valid
+          email: `${admin.username}@collectiverse.local`,
+          username: admin.username,
+          passwordHash: admin.passwordHash,
+          displayName: admin.username,
+          role: 'ADMIN',
+        },
+      });
+      return user.id;
+    }
+  }
+
+  throw new Error('User not found');
+}
+
 // Verify admin (legacy admin table)
 export async function verifyAdmin(username: string, password: string) {
   const admin = await prisma.admin.findUnique({ where: { username } });

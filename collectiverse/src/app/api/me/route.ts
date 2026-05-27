@@ -19,5 +19,5 @@ export async function GET() {
   }
 
   // Legacy admin
-  return NextResponse.json({ user: { id: session.sub, username: session.username, role: session.role } });
+  return NextResponse.json({ user: { id: session.sub, username: session.username, displayName: session.username, role: session.role } });
 }

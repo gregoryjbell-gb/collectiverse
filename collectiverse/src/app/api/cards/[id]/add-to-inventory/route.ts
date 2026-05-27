@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { getSession, ensureUserId } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  let userId: string;
+  try {
+    userId = await ensureUserId(session);
+  } catch {
+    return NextResponse.json({ error: 'User account not found. Please register.' }, { status: 403 });
+  }
 
   const card = await prisma.card.findUnique({ where: { id: params.id } });
   if (!card) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
@@ -13,9 +20,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const item = await prisma.inventoryItem.create({
     data: {
-      userId: session.sub,
+      userId,
       cardId: params.id,
-      quantity: data.quantity || 1,
+      quantity: data.quantity ? parseInt(data.quantity) : 1,
       condition: data.condition || null,
       gradeCompany: data.gradeCompany || null,
       gradeValue: data.gradeValue || null,

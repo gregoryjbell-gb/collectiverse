@@ -15,7 +15,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [user, setUser] = useState<{ username?: string; role?: string } | null>(null);
+  const [user, setUser] = useState<{ username?: string; displayName?: string; role?: string } | null>(null);
 
   useEffect(() => {
     fetch('/api/me')
@@ -65,6 +65,10 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gunmetal/50 border border-silver/10">
+                <span className="text-sm text-white font-medium">{user.displayName || user.username}</span>
+                <span className="badge bg-electric/20 text-electric text-xs">{user.role}</span>
+              </div>
               <Link
                 href="/dashboard"
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -153,6 +157,10 @@ export default function Navbar() {
           <div className="border-t border-silver/10 pt-3 mt-3 space-y-1">
             {user ? (
               <>
+                <div className="flex items-center gap-2 px-4 py-2">
+                  <span className="text-sm text-white font-medium">{user.displayName || user.username}</span>
+                  <span className="badge bg-electric/20 text-electric text-xs">{user.role}</span>
+                </div>
                 <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">
                   My Collection
                 </Link>

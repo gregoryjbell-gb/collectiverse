@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Props {
@@ -29,6 +29,13 @@ export default function AddToInventoryButton({ cardId }: Props) {
     notes: '',
   });
 
+  const [frontFile, setFrontFile] = useState<File | null>(null);
+  const [backFile, setBackFile] = useState<File | null>(null);
+  const [privateFile, setPrivateFile] = useState<File | null>(null);
+  const frontRef = useRef<HTMLInputElement>(null);
+  const backRef = useRef<HTMLInputElement>(null);
+  const privateRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     fetch('/api/me').then(r => r.ok ? r.json() : null).then(d => {
       if (d?.user) {
@@ -43,19 +50,27 @@ export default function AddToInventoryButton({ cardId }: Props) {
     setSaving(true);
     setError('');
     try {
+      // Create the inventory item
       const res = await fetch(`/api/cards/${cardId}/add-to-inventory`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-      if (res.status === 401) {
-        router.push('/login');
-        return;
+      if (res.status === 401) { router.push('/login'); return; }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+
+      const { item } = await res.json();
+
+      // Upload images if any were selected
+      if (frontFile || backFile || privateFile) {
+        const fd = new FormData();
+        if (frontFile) fd.append('frontScan', frontFile);
+        if (backFile) fd.append('backScan', backFile);
+        if (privateFile) fd.append('privateImage', privateFile);
+
+        await fetch(`/api/inventory/${item.id}/upload`, { method: 'POST', body: fd });
       }
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error);
-      }
+
       setSuccess(true);
       setTimeout(() => { setOpen(false); setSuccess(false); }, 2000);
     } catch (err: any) {
@@ -66,11 +81,8 @@ export default function AddToInventoryButton({ cardId }: Props) {
   };
 
   if (loading) return null;
-
-  // Admins don't have collections
   if (isAdmin) return null;
 
-  // Not logged in — show prompt
   if (!isLoggedIn) {
     return (
       <a href="/login" className="btn-primary w-full justify-center text-center block">
@@ -148,6 +160,31 @@ export default function AddToInventoryButton({ cardId }: Props) {
       <div>
         <label className="text-xs text-silver block mb-1">Notes (private)</label>
         <textarea className="input-field text-sm min-h-[50px]" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+      </div>
+
+      {/* Image Uploads */}
+      <div className="border-t border-silver/10 pt-3">
+        <p className="text-xs text-silver mb-2">Private Scans (optional)</p>
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <input ref={frontRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => setFrontFile(e.target.files?.[0] || null)} />
+            <button type="button" onClick={() => frontRef.current?.click()} className={`w-full text-xs py-2 px-2 rounded-lg border transition-colors ${frontFile ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-silver/20 text-silver hover:border-silver/40'}`}>
+              {frontFile ? '✓ Front' : '+ Front'}
+            </button>
+          </div>
+          <div>
+            <input ref={backRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => setBackFile(e.target.files?.[0] || null)} />
+            <button type="button" onClick={() => backRef.current?.click()} className={`w-full text-xs py-2 px-2 rounded-lg border transition-colors ${backFile ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-silver/20 text-silver hover:border-silver/40'}`}>
+              {backFile ? '✓ Back' : '+ Back'}
+            </button>
+          </div>
+          <div>
+            <input ref={privateRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => setPrivateFile(e.target.files?.[0] || null)} />
+            <button type="button" onClick={() => privateRef.current?.click()} className={`w-full text-xs py-2 px-2 rounded-lg border transition-colors ${privateFile ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-silver/20 text-silver hover:border-silver/40'}`}>
+              {privateFile ? '✓ Image' : '+ Image'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {error && <p className="text-red-400 text-xs">{error}</p>}

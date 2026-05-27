@@ -1,24 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function QRCodeDisplay({ cardId }: { cardId: string }) {
   const [qrUrl, setQrUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const generate = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/qr/${cardId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setQrUrl(data.qrDataUrl);
-      }
-    } catch {
-      // QR generation requires admin auth — show placeholder for public
-    }
-    setLoading(false);
-  };
+  useEffect(() => {
+    fetch(`/api/qr/${cardId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.qrDataUrl) setQrUrl(d.qrDataUrl); })
+      .catch(() => {});
+  }, [cardId]);
 
   return (
     <div className="card-surface p-5 mt-4 text-center">
@@ -26,9 +18,7 @@ export default function QRCodeDisplay({ cardId }: { cardId: string }) {
       {qrUrl ? (
         <img src={qrUrl} alt="QR Code" className="mx-auto rounded-lg" width={200} height={200} />
       ) : (
-        <button onClick={generate} disabled={loading} className="btn-primary text-sm">
-          {loading ? 'Generating...' : 'Generate QR Code'}
-        </button>
+        <div className="text-silver text-sm py-4">Loading QR...</div>
       )}
       <p className="text-silver text-xs mt-2">Scan to access this card&apos;s digital profile</p>
     </div>

@@ -22,7 +22,7 @@ export async function GET() {
 
   // Get card details for top scanned
   const topCards = await Promise.all(
-    topScanned.map(async (s) => {
+    topScanned.map(async (s: { cardId: string; _count: { cardId: number } }) => {
       const card = await prisma.card.findUnique({
         where: { id: s.cardId },
         include: { person: true },

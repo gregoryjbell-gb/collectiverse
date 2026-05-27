@@ -77,8 +77,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [setSearch, setSetSearch] = useState('');
   const [showSetForm, setShowSetForm] = useState(false);
   const [showUserForm, setShowUserForm] = useState(false);
-  const [setForm, setSetFormState] = useState({ name: '', year: '', manufacturer: '', sportId: '' });
+  const [setForm, setSetFormState] = useState({ name: '', year: '', manufacturer: '', sportId: '', releaseDate: '' });
   const [userForm, setUserForm] = useState({ email: '', username: '', password: '', displayName: '', role: 'USER' });
+  const [sports, setSports] = useState<any[]>([]);
+  const [editingSet, setEditingSet] = useState<string | null>(null);
+  const [editSetForm, setEditSetForm] = useState<any>({});
 
   useEffect(() => {
     fetch('/api/admin/analytics').then((r) => r.json()).then(setAnalytics);
@@ -87,7 +90,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   useEffect(() => {
     if (tab === 'cards') fetch('/api/admin/cards').then((r) => r.json()).then((d) => setCards(d.cards || []));
     if (tab === 'players') fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
-    if (tab === 'sets') fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
+    if (tab === 'sets') {
+      fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
+      fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
+    }
     if (tab === 'users') fetch('/api/admin/users').then((r) => r.json()).then((d) => setUsers(d.users || []));
   }, [tab]);
 
@@ -115,7 +121,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const createSet = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch('/api/admin/sets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(setForm) });
-    if (res.ok) { setShowSetForm(false); setSetFormState({ name: '', year: '', manufacturer: '', sportId: '' }); fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || [])); }
+    if (res.ok) { setShowSetForm(false); setSetFormState({ name: '', year: '', manufacturer: '', sportId: '', releaseDate: '' }); fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || [])); }
+  };
+  const startEditSet = (s: any) => {
+    setEditingSet(s.id);
+    setEditSetForm({ name: s.name, year: String(s.year), manufacturer: s.manufacturer || '', sportId: s.sport?.id || s.sportId || '', releaseDate: s.releaseDate || '' });
+  };
+  const saveEditSet = async (id: string) => {
+    await fetch(`/api/admin/sets/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editSetForm) });
+    setEditingSet(null);
+    fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
   };
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -257,33 +272,65 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <button onClick={() => setShowSetForm(!showSetForm)} className="btn-primary text-sm ml-auto">{showSetForm ? 'Cancel' : '+ Add Set'}</button>
             </div>
             {showSetForm && (
-              <form onSubmit={createSet} className="card-surface p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                <input className="input-field text-sm" placeholder="Name *" value={setForm.name} onChange={e => setSetFormState({...setForm, name: e.target.value})} required />
-                <input type="number" className="input-field text-sm" placeholder="Year *" value={setForm.year} onChange={e => setSetFormState({...setForm, year: e.target.value})} required />
-                <input className="input-field text-sm" placeholder="Manufacturer" value={setForm.manufacturer} onChange={e => setSetFormState({...setForm, manufacturer: e.target.value})} />
-                <button type="submit" className="btn-primary text-sm">Create</button>
+              <form onSubmit={createSet} className="card-surface p-4 mb-4 space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <input className="input-field text-sm" placeholder="Name *" value={setForm.name} onChange={e => setSetFormState({...setForm, name: e.target.value})} required />
+                  <input type="number" className="input-field text-sm" placeholder="Year *" value={setForm.year} onChange={e => setSetFormState({...setForm, year: e.target.value})} required />
+                  <input className="input-field text-sm" placeholder="Manufacturer" value={setForm.manufacturer} onChange={e => setSetFormState({...setForm, manufacturer: e.target.value})} />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <select className="input-field text-sm" value={setForm.sportId} onChange={e => setSetFormState({...setForm, sportId: e.target.value})}>
+                    <option value="">Select Sport...</option>
+                    {sports.map(sp => <option key={sp.id} value={sp.id}>{sp.name}</option>)}
+                  </select>
+                  <input type="date" className="input-field text-sm" placeholder="Release Date" value={setForm.releaseDate} onChange={e => setSetFormState({...setForm, releaseDate: e.target.value})} />
+                  <button type="submit" className="btn-primary text-sm">Create Set</button>
+                </div>
               </form>
             )}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-silver/20 text-left text-silver text-xs">
-                  <th className="py-2 px-2">Name</th><th className="py-2 px-2">Year</th><th className="py-2 px-2">Manufacturer</th><th className="py-2 px-2">Sport</th><th className="py-2 px-2">Cards</th><th className="py-2 px-2">Actions</th>
+                  <th className="py-2 px-2">Name</th><th className="py-2 px-2">Year</th><th className="py-2 px-2">Manufacturer</th><th className="py-2 px-2">Sport</th><th className="py-2 px-2">Release</th><th className="py-2 px-2">Cards</th><th className="py-2 px-2">Actions</th>
                 </tr></thead>
                 <tbody>
                   {filteredSets.map(s => (
-                    <tr key={s.id} className="border-b border-silver/10 hover:bg-silver/5">
-                      <td className="py-2 px-2 font-medium">{s.name}</td>
-                      <td className="py-2 px-2 text-silver">{s.year}</td>
-                      <td className="py-2 px-2 text-silver">{s.manufacturer || '—'}</td>
-                      <td className="py-2 px-2 text-silver">{s.sport?.name || '—'}</td>
-                      <td className="py-2 px-2 text-silver">{s._count?.cards || 0}</td>
-                      <td className="py-2 px-2">
-                        <div className="flex gap-2">
-                          <a href={`/sets/${s.id}`} className="text-electric text-xs hover:underline">View</a>
-                          <button onClick={() => deleteSet(s.id)} className="text-red-400 text-xs hover:underline">Del</button>
-                        </div>
-                      </td>
-                    </tr>
+                    editingSet === s.id ? (
+                      <tr key={s.id} className="border-b border-silver/10 bg-silver/5">
+                        <td className="py-1 px-1"><input className="input-field text-xs py-1" value={editSetForm.name} onChange={e => setEditSetForm({...editSetForm, name: e.target.value})} /></td>
+                        <td className="py-1 px-1"><input type="number" className="input-field text-xs py-1 w-20" value={editSetForm.year} onChange={e => setEditSetForm({...editSetForm, year: e.target.value})} /></td>
+                        <td className="py-1 px-1"><input className="input-field text-xs py-1" value={editSetForm.manufacturer} onChange={e => setEditSetForm({...editSetForm, manufacturer: e.target.value})} /></td>
+                        <td className="py-1 px-1">
+                          <select className="input-field text-xs py-1" value={editSetForm.sportId} onChange={e => setEditSetForm({...editSetForm, sportId: e.target.value})}>
+                            <option value="">None</option>
+                            {sports.map(sp => <option key={sp.id} value={sp.id}>{sp.name}</option>)}
+                          </select>
+                        </td>
+                        <td className="py-1 px-1"><input type="date" className="input-field text-xs py-1" value={editSetForm.releaseDate} onChange={e => setEditSetForm({...editSetForm, releaseDate: e.target.value})} /></td>
+                        <td className="py-1 px-1 text-silver">{s._count?.cards || 0}</td>
+                        <td className="py-1 px-1">
+                          <div className="flex gap-1">
+                            <button onClick={() => saveEditSet(s.id)} className="text-green-400 text-xs hover:underline">Save</button>
+                            <button onClick={() => setEditingSet(null)} className="text-silver text-xs hover:underline">Cancel</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={s.id} className="border-b border-silver/10 hover:bg-silver/5">
+                        <td className="py-2 px-2 font-medium">{s.name}</td>
+                        <td className="py-2 px-2 text-silver">{s.year}</td>
+                        <td className="py-2 px-2 text-silver">{s.manufacturer || '—'}</td>
+                        <td className="py-2 px-2 text-silver">{s.sport?.name || '—'}</td>
+                        <td className="py-2 px-2 text-silver">{s.releaseDate || '—'}</td>
+                        <td className="py-2 px-2 text-silver">{s._count?.cards || 0}</td>
+                        <td className="py-2 px-2">
+                          <div className="flex gap-2">
+                            <button onClick={() => startEditSet(s)} className="text-electric text-xs hover:underline">Edit</button>
+                            <button onClick={() => deleteSet(s.id)} className="text-red-400 text-xs hover:underline">Del</button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
                   ))}
                 </tbody>
               </table>

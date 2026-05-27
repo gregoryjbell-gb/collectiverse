@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -12,6 +12,7 @@ export default function EditInventoryPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/inventory/${id}`)
@@ -59,7 +60,6 @@ export default function EditInventoryPage() {
     e.preventDefault();
     const validationError = validate();
     if (validationError) { setError(validationError); return; }
-
     setSaving(true);
     setError('');
     try {
@@ -68,15 +68,33 @@ export default function EditInventoryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error || 'Failed to save');
-      }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to save'); }
       router.push(`/inventory/${id}`);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUpload = async (fieldName: string, file: File) => {
+    setUploading(fieldName);
+    setError('');
+    try {
+      const fd = new FormData();
+      fd.append(fieldName, file);
+      const res = await fetch(`/api/inventory/${id}/upload`, { method: 'POST', body: fd });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
+      const data = await res.json();
+      // Map field name to form field
+      const urlField = fieldName === 'frontScan' ? 'frontScanUrl' : fieldName === 'backScan' ? 'backScanUrl' : 'privateImageUrl';
+      if (data.urls[fieldName]) {
+        setForm((prev: any) => ({ ...prev, [urlField]: data.urls[fieldName] }));
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUploading(null);
     }
   };
 
@@ -90,7 +108,6 @@ export default function EditInventoryPage() {
         <Link href={`/inventory/${id}`} className="text-silver hover:text-white text-sm mb-6 inline-block">&larr; Back</Link>
         <h1 className="text-2xl font-bold mb-2">Edit Inventory Item</h1>
 
-        {/* Read-only card context */}
         {cardInfo && (
           <div className="card-surface p-4 mb-6 bg-navy/30">
             <p className="text-sm font-medium">{cardInfo.person?.displayName || 'Unknown'}</p>
@@ -176,23 +193,36 @@ export default function EditInventoryPage() {
             <textarea className="input-field min-h-[80px]" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
           </div>
 
-          {/* Private Image URLs */}
+          {/* Image Uploads */}
           <div className="border-t border-silver/10 pt-4">
-            <p className="text-sm text-silver mb-3">Private Scans / Images</p>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-silver block mb-1">Front Scan URL</label>
-                <input className="input-field text-sm" value={form.frontScanUrl} onChange={e => setForm({ ...form, frontScanUrl: e.target.value })} placeholder="https://..." />
-              </div>
-              <div>
-                <label className="text-xs text-silver block mb-1">Back Scan URL</label>
-                <input className="input-field text-sm" value={form.backScanUrl} onChange={e => setForm({ ...form, backScanUrl: e.target.value })} placeholder="https://..." />
-              </div>
-              <div>
-                <label className="text-xs text-silver block mb-1">Private Image URL</label>
-                <input className="input-field text-sm" value={form.privateImageUrl} onChange={e => setForm({ ...form, privateImageUrl: e.target.value })} placeholder="https://..." />
-              </div>
-            </div>
+            <p className="text-sm font-medium mb-3">Private Scans / Images</p>
+
+            <ImageUploadField
+              label="Front Scan"
+              fieldName="frontScan"
+              currentUrl={form.frontScanUrl}
+              onUrlChange={(url) => setForm({ ...form, frontScanUrl: url })}
+              onUpload={handleUpload}
+              uploading={uploading === 'frontScan'}
+            />
+
+            <ImageUploadField
+              label="Back Scan"
+              fieldName="backScan"
+              currentUrl={form.backScanUrl}
+              onUrlChange={(url) => setForm({ ...form, backScanUrl: url })}
+              onUpload={handleUpload}
+              uploading={uploading === 'backScan'}
+            />
+
+            <ImageUploadField
+              label="Private Image"
+              fieldName="privateImage"
+              currentUrl={form.privateImageUrl}
+              onUrlChange={(url) => setForm({ ...form, privateImageUrl: url })}
+              onUpload={handleUpload}
+              uploading={uploading === 'privateImage'}
+            />
           </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -204,5 +234,72 @@ export default function EditInventoryPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+function ImageUploadField({ label, fieldName, currentUrl, onUrlChange, onUpload, uploading }: {
+  label: string;
+  fieldName: string;
+  currentUrl: string;
+  onUrlChange: (url: string) => void;
+  onUpload: (fieldName: string, file: File) => void;
+  uploading: boolean;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [showUrl, setShowUrl] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) onUpload(fieldName, file);
+  };
+
+  return (
+    <div className="mb-4">
+      <label className="text-xs text-silver block mb-1.5">{label}</label>
+
+      {/* Preview */}
+      {currentUrl && (
+        <div className="mb-2">
+          <img src={currentUrl} alt={label} className="w-24 h-24 object-cover rounded-lg border border-silver/20" />
+        </div>
+      )}
+
+      <div className="flex gap-2 items-center flex-wrap">
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="btn-secondary text-xs px-3 py-1.5"
+        >
+          {uploading ? 'Uploading...' : currentUrl ? 'Replace' : 'Upload'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowUrl(!showUrl)}
+          className="text-xs text-silver hover:text-white"
+        >
+          {showUrl ? 'Hide URL' : 'Enter URL manually'}
+        </button>
+        {currentUrl && (
+          <button type="button" onClick={() => onUrlChange('')} className="text-xs text-red-400 hover:underline">Remove</button>
+        )}
+      </div>
+
+      {showUrl && (
+        <input
+          className="input-field text-sm mt-2"
+          value={currentUrl}
+          onChange={e => onUrlChange(e.target.value)}
+          placeholder="https://..."
+        />
+      )}
+    </div>
   );
 }

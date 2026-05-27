@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import type { Metadata } from 'next';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import AddToInventoryButton from '@/components/AddToInventoryButton';
+import AdminEditCard from '@/components/AdminEditCard';
 
 interface Props { params: { id: string } }
 
@@ -72,6 +73,21 @@ export default async function CardPage({ params }: Props) {
             <div className="mt-4">
               <AddToInventoryButton cardId={card.id} />
             </div>
+            <AdminEditCard cardId={card.id} initialData={{
+              cardNumber: card.cardNumber,
+              year: card.year,
+              parallel: card.parallel,
+              rookie: card.rookie,
+              autograph: card.autograph,
+              relic: card.relic,
+              serialNumber: card.serialNumber,
+              printRun: card.printRun,
+              estimatedValue: card.estimatedValue,
+              gradingRecommendation: card.gradingRecommendation,
+              status: card.status,
+              whyItMatters: card.whyItMatters,
+              funFacts: card.funFacts,
+            }} />
           </div>
 
           {/* Right: Details */}

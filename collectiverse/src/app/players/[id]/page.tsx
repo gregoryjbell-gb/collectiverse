@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import type { Metadata } from 'next';
+import AdminEditPlayer from '@/components/AdminEditPlayer';
 
 interface Props { params: { id: string } }
 
@@ -51,6 +52,13 @@ export default async function PlayerPage({ params }: Props) {
               {person.biography && <p className="text-silver">{person.biography}</p>}
             </div>
           </div>
+          <AdminEditPlayer playerId={person.id} initialData={{
+            displayName: person.displayName,
+            biography: person.biography,
+            achievements: person.achievements,
+            hallOfFame: person.hallOfFame,
+            aliases: person.aliases,
+          }} />
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">

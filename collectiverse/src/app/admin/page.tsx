@@ -72,24 +72,22 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [players, setPlayers] = useState<any[]>([]);
   const [sets, setSets] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [cardSearch, setCardSearch] = useState('');
+  const [playerSearch, setPlayerSearch] = useState('');
+  const [setSearch, setSetSearch] = useState('');
   const [showSetForm, setShowSetForm] = useState(false);
   const [showUserForm, setShowUserForm] = useState(false);
-  const [setForm, setSetForm] = useState({ name: '', year: '', manufacturer: '', sportId: '' });
+  const [setForm, setSetFormState] = useState({ name: '', year: '', manufacturer: '', sportId: '' });
   const [userForm, setUserForm] = useState({ email: '', username: '', password: '', displayName: '', role: 'USER' });
-  const [sports, setSports] = useState<any[]>([]);
 
   useEffect(() => {
     fetch('/api/admin/analytics').then((r) => r.json()).then(setAnalytics);
-    fetch('/api/search?q=').then((r) => r.json()).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (tab === 'cards') fetch('/api/admin/cards').then((r) => r.json()).then((d) => setCards(d.cards || []));
     if (tab === 'players') fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
-    if (tab === 'sets') {
-      fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
-      fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
-    }
+    if (tab === 'sets') fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
     if (tab === 'users') fetch('/api/admin/users').then((r) => r.json()).then((d) => setUsers(d.users || []));
   }, [tab]);
 
@@ -98,49 +96,53 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     await fetch(`/api/admin/cards/${id}`, { method: 'DELETE' });
     setCards(cards.filter((c) => c.id !== id));
   };
-
   const deletePlayer = async (id: string) => {
-    if (!confirm('Delete this player?')) return;
+    if (!confirm('Delete this player and all their cards?')) return;
     await fetch(`/api/admin/players/${id}`, { method: 'DELETE' });
     setPlayers(players.filter((p) => p.id !== id));
   };
-
   const deleteSet = async (id: string) => {
-    if (!confirm('Delete this set? Cards in this set will be unlinked.')) return;
+    if (!confirm('Delete this set?')) return;
     await fetch(`/api/admin/sets/${id}`, { method: 'DELETE' });
     setSets(sets.filter((s) => s.id !== id));
   };
-
   const deleteUser = async (id: string) => {
     if (!confirm('Delete this user and all their inventory?')) return;
     const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
     if (res.ok) setUsers(users.filter((u) => u.id !== id));
     else { const d = await res.json(); alert(d.error); }
   };
-
   const createSet = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch('/api/admin/sets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(setForm) });
-    if (res.ok) {
-      setShowSetForm(false);
-      setSetForm({ name: '', year: '', manufacturer: '', sportId: '' });
-      fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
-    }
+    if (res.ok) { setShowSetForm(false); setSetFormState({ name: '', year: '', manufacturer: '', sportId: '' }); fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || [])); }
   };
-
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch('/api/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userForm) });
-    if (res.ok) {
-      setShowUserForm(false);
-      setUserForm({ email: '', username: '', password: '', displayName: '', role: 'USER' });
-      fetch('/api/admin/users').then((r) => r.json()).then((d) => setUsers(d.users || []));
-    } else { const d = await res.json(); alert(d.error); }
+    if (res.ok) { setShowUserForm(false); setUserForm({ email: '', username: '', password: '', displayName: '', role: 'USER' }); fetch('/api/admin/users').then((r) => r.json()).then((d) => setUsers(d.users || [])); }
+    else { const d = await res.json(); alert(d.error); }
   };
+
+  // Filtered lists
+  const filteredCards = cards.filter(c => {
+    if (!cardSearch) return true;
+    const q = cardSearch.toLowerCase();
+    return (c.person?.displayName || '').toLowerCase().includes(q) || (c.set?.name || '').toLowerCase().includes(q) || (c.cardNumber || '').includes(q) || (c.team?.name || '').toLowerCase().includes(q) || String(c.year || '').includes(q);
+  });
+  const filteredPlayers = players.filter(p => {
+    if (!playerSearch) return true;
+    return p.displayName.toLowerCase().includes(playerSearch.toLowerCase());
+  });
+  const filteredSets = sets.filter(s => {
+    if (!setSearch) return true;
+    const q = setSearch.toLowerCase();
+    return s.name.toLowerCase().includes(q) || (s.manufacturer || '').toLowerCase().includes(q) || String(s.year).includes(q);
+  });
 
   return (
     <main className="min-h-screen py-8 px-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <button onClick={onLogout} className="btn-secondary text-sm">Logout</button>
@@ -154,110 +156,146 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           ))}
         </nav>
 
+        {/* Overview */}
         {tab === 'overview' && analytics && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="card-surface p-5 text-center">
-              <p className="text-3xl font-bold text-electric">{analytics.totalCards}</p>
-              <p className="text-silver text-sm">Total Cards</p>
+          <>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="card-surface p-5 text-center"><p className="text-3xl font-bold text-electric">{analytics.totalCards}</p><p className="text-silver text-sm">Cards</p></div>
+              <div className="card-surface p-5 text-center"><p className="text-3xl font-bold text-electric">{analytics.totalPlayers}</p><p className="text-silver text-sm">Players</p></div>
+              <div className="card-surface p-5 text-center"><p className="text-3xl font-bold text-electric">${analytics.totalValue?.toLocaleString()}</p><p className="text-silver text-sm">Total Value</p></div>
+              <div className="card-surface p-5 text-center"><p className="text-3xl font-bold text-electric">{analytics.totalScans}</p><p className="text-silver text-sm">QR Scans</p></div>
             </div>
-            <div className="card-surface p-5 text-center">
-              <p className="text-3xl font-bold text-electric">{analytics.totalPlayers}</p>
-              <p className="text-silver text-sm">Players</p>
-            </div>
-            <div className="card-surface p-5 text-center">
-              <p className="text-3xl font-bold text-electric">${analytics.totalValue?.toLocaleString()}</p>
-              <p className="text-silver text-sm">Total Value</p>
-            </div>
-            <div className="card-surface p-5 text-center">
-              <p className="text-3xl font-bold text-electric">{analytics.totalScans}</p>
-              <p className="text-silver text-sm">QR Scans</p>
-            </div>
-          </div>
+            {analytics?.topScanned?.length > 0 && (
+              <div className="card-surface p-6">
+                <h2 className="text-lg font-semibold mb-3">Most Scanned</h2>
+                {analytics.topScanned.map((s: any) => (
+                  <div key={s.cardId} className="flex justify-between py-1.5 border-b border-silver/10 last:border-0 text-sm">
+                    <span>{s.playerName}</span><span className="text-electric font-bold">{s.scans}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
-        {tab === 'overview' && analytics?.topScanned?.length > 0 && (
-          <div className="card-surface p-6">
-            <h2 className="text-xl font-semibold mb-4">Most Scanned Cards</h2>
-            <div className="space-y-2">
-              {analytics.topScanned.map((s: any) => (
-                <div key={s.cardId} className="flex justify-between items-center py-2 border-b border-silver/10 last:border-0">
-                  <span>{s.playerName}</span>
-                  <span className="text-electric font-bold">{s.scans} scans</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
+        {/* Cards */}
         {tab === 'cards' && (
-          <div className="space-y-3">
-            {cards.map((card) => (
-              <div key={card.id} className="card-surface p-4 flex justify-between items-center">
-                <div>
-                  <p className="font-medium">{card.person?.displayName || 'Unknown'} — {card.set?.name} #{card.cardNumber}</p>
-                  <p className="text-sm text-silver">{card.year} • {card.team?.name} • Status: {card.status}</p>
-                </div>
-                <div className="flex gap-2">
-                  <a href={`/cards/${card.id}`} className="text-electric text-sm hover:underline">View</a>
-                  <button onClick={() => deleteCard(card.id)} className="text-red-400 text-sm hover:underline">Delete</button>
-                </div>
-              </div>
-            ))}
+          <div>
+            <div className="flex gap-3 mb-4 items-center">
+              <input type="search" className="input-field max-w-sm" placeholder="Search by player, set, team, year, card #..." value={cardSearch} onChange={e => setCardSearch(e.target.value)} />
+              <span className="text-silver text-sm">{filteredCards.length} of {cards.length}</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-silver/20 text-left text-silver text-xs">
+                  <th className="py-2 px-2">Player</th><th className="py-2 px-2">Set</th><th className="py-2 px-2">#</th><th className="py-2 px-2">Year</th><th className="py-2 px-2">Team</th><th className="py-2 px-2">Parallel</th><th className="py-2 px-2">Value</th><th className="py-2 px-2">Status</th><th className="py-2 px-2">Actions</th>
+                </tr></thead>
+                <tbody>
+                  {filteredCards.map(card => (
+                    <tr key={card.id} className="border-b border-silver/10 hover:bg-silver/5">
+                      <td className="py-2 px-2 font-medium">{card.person?.displayName || '—'}</td>
+                      <td className="py-2 px-2 text-silver">{card.set?.name || '—'}</td>
+                      <td className="py-2 px-2 text-silver">{card.cardNumber || '—'}</td>
+                      <td className="py-2 px-2 text-silver">{card.year || '—'}</td>
+                      <td className="py-2 px-2 text-silver">{card.team?.name || '—'}</td>
+                      <td className="py-2 px-2 text-silver">{card.parallel || '—'}</td>
+                      <td className="py-2 px-2 text-electric">{card.estimatedValue ? `$${card.estimatedValue.toLocaleString()}` : '—'}</td>
+                      <td className="py-2 px-2"><span className="badge bg-silver/10 text-silver text-xs">{card.status}</span></td>
+                      <td className="py-2 px-2">
+                        <div className="flex gap-2">
+                          <a href={`/cards/${card.id}`} className="text-electric text-xs hover:underline">Edit</a>
+                          <button onClick={() => deleteCard(card.id)} className="text-red-400 text-xs hover:underline">Del</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
+        {/* Players */}
         {tab === 'players' && (
-          <div className="space-y-3">
-            {players.map((player) => (
-              <div key={player.id} className="card-surface p-4 flex justify-between items-center">
-                <div>
-                  <p className="font-medium">{player.displayName}</p>
-                  <p className="text-sm text-silver">{player.personSports?.map((ps: any) => ps.sport.name).join(', ')} • {player._count?.cards} cards</p>
-                </div>
-                <div className="flex gap-2">
-                  <a href={`/players/${player.id}`} className="text-electric text-sm hover:underline">View</a>
-                  <button onClick={() => deletePlayer(player.id)} className="text-red-400 text-sm hover:underline">Delete</button>
-                </div>
-              </div>
-            ))}
+          <div>
+            <div className="flex gap-3 mb-4 items-center">
+              <input type="search" className="input-field max-w-sm" placeholder="Search players..." value={playerSearch} onChange={e => setPlayerSearch(e.target.value)} />
+              <span className="text-silver text-sm">{filteredPlayers.length} of {players.length}</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-silver/20 text-left text-silver text-xs">
+                  <th className="py-2 px-2">Name</th><th className="py-2 px-2">Sports</th><th className="py-2 px-2">HOF</th><th className="py-2 px-2">Cards</th><th className="py-2 px-2">Actions</th>
+                </tr></thead>
+                <tbody>
+                  {filteredPlayers.map(player => (
+                    <tr key={player.id} className="border-b border-silver/10 hover:bg-silver/5">
+                      <td className="py-2 px-2 font-medium">{player.displayName}</td>
+                      <td className="py-2 px-2 text-silver">{player.personSports?.map((ps: any) => ps.sport.name).join(', ') || '—'}</td>
+                      <td className="py-2 px-2">{player.hallOfFame ? <span className="text-amber-400">✓</span> : '—'}</td>
+                      <td className="py-2 px-2 text-silver">{player._count?.cards || 0}</td>
+                      <td className="py-2 px-2">
+                        <div className="flex gap-2">
+                          <a href={`/players/${player.id}`} className="text-electric text-xs hover:underline">Edit</a>
+                          <button onClick={() => deletePlayer(player.id)} className="text-red-400 text-xs hover:underline">Del</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
+        {/* Sets */}
         {tab === 'sets' && (
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-silver text-sm">{sets.length} sets</p>
-              <button onClick={() => setShowSetForm(!showSetForm)} className="btn-primary text-sm">{showSetForm ? 'Cancel' : '+ Add Set'}</button>
+            <div className="flex gap-3 mb-4 items-center flex-wrap">
+              <input type="search" className="input-field max-w-sm" placeholder="Search sets..." value={setSearch} onChange={e => setSetSearch(e.target.value)} />
+              <span className="text-silver text-sm">{filteredSets.length} of {sets.length}</span>
+              <button onClick={() => setShowSetForm(!showSetForm)} className="btn-primary text-sm ml-auto">{showSetForm ? 'Cancel' : '+ Add Set'}</button>
             </div>
             {showSetForm && (
               <form onSubmit={createSet} className="card-surface p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                <input className="input-field text-sm" placeholder="Name *" value={setForm.name} onChange={e => setSetForm({...setForm, name: e.target.value})} required />
-                <input type="number" className="input-field text-sm" placeholder="Year *" value={setForm.year} onChange={e => setSetForm({...setForm, year: e.target.value})} required />
-                <input className="input-field text-sm" placeholder="Manufacturer" value={setForm.manufacturer} onChange={e => setSetForm({...setForm, manufacturer: e.target.value})} />
+                <input className="input-field text-sm" placeholder="Name *" value={setForm.name} onChange={e => setSetFormState({...setForm, name: e.target.value})} required />
+                <input type="number" className="input-field text-sm" placeholder="Year *" value={setForm.year} onChange={e => setSetFormState({...setForm, year: e.target.value})} required />
+                <input className="input-field text-sm" placeholder="Manufacturer" value={setForm.manufacturer} onChange={e => setSetFormState({...setForm, manufacturer: e.target.value})} />
                 <button type="submit" className="btn-primary text-sm">Create</button>
               </form>
             )}
-            <div className="space-y-3">
-              {sets.map((s) => (
-                <div key={s.id} className="card-surface p-4 flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">{s.name}</p>
-                    <p className="text-sm text-silver">{s.manufacturer || 'Unknown'} • {s.year} • {s.sport?.name || 'No sport'} • {s._count?.cards || 0} cards</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <a href={`/sets/${s.id}`} className="text-electric text-sm hover:underline">View</a>
-                    <button onClick={() => deleteSet(s.id)} className="text-red-400 text-sm hover:underline">Delete</button>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-silver/20 text-left text-silver text-xs">
+                  <th className="py-2 px-2">Name</th><th className="py-2 px-2">Year</th><th className="py-2 px-2">Manufacturer</th><th className="py-2 px-2">Sport</th><th className="py-2 px-2">Cards</th><th className="py-2 px-2">Actions</th>
+                </tr></thead>
+                <tbody>
+                  {filteredSets.map(s => (
+                    <tr key={s.id} className="border-b border-silver/10 hover:bg-silver/5">
+                      <td className="py-2 px-2 font-medium">{s.name}</td>
+                      <td className="py-2 px-2 text-silver">{s.year}</td>
+                      <td className="py-2 px-2 text-silver">{s.manufacturer || '—'}</td>
+                      <td className="py-2 px-2 text-silver">{s.sport?.name || '—'}</td>
+                      <td className="py-2 px-2 text-silver">{s._count?.cards || 0}</td>
+                      <td className="py-2 px-2">
+                        <div className="flex gap-2">
+                          <a href={`/sets/${s.id}`} className="text-electric text-xs hover:underline">View</a>
+                          <button onClick={() => deleteSet(s.id)} className="text-red-400 text-xs hover:underline">Del</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
+        {/* Users */}
         {tab === 'users' && (
           <div>
             <div className="flex justify-between items-center mb-4">
-              <p className="text-silver text-sm">{users.length} users</p>
+              <span className="text-silver text-sm">{users.length} users</span>
               <button onClick={() => setShowUserForm(!showUserForm)} className="btn-primary text-sm">{showUserForm ? 'Cancel' : '+ Add User'}</button>
             </div>
             {showUserForm && (
@@ -277,18 +315,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
               </form>
             )}
-            <div className="space-y-3">
-              {users.map((u) => (
-                <div key={u.id} className="card-surface p-4 flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">{u.displayName || u.username || u.email}</p>
-                    <p className="text-sm text-silver">{u.email} • <span className={u.role === 'ADMIN' ? 'text-amber-400' : 'text-silver'}>{u.role}</span> • {u._count?.inventoryItems || 0} inventory items</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => deleteUser(u.id)} className="text-red-400 text-sm hover:underline">Delete</button>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-silver/20 text-left text-silver text-xs">
+                  <th className="py-2 px-2">Name</th><th className="py-2 px-2">Email</th><th className="py-2 px-2">Username</th><th className="py-2 px-2">Role</th><th className="py-2 px-2">Items</th><th className="py-2 px-2">Actions</th>
+                </tr></thead>
+                <tbody>
+                  {users.map(u => (
+                    <tr key={u.id} className="border-b border-silver/10 hover:bg-silver/5">
+                      <td className="py-2 px-2 font-medium">{u.displayName || '—'}</td>
+                      <td className="py-2 px-2 text-silver">{u.email}</td>
+                      <td className="py-2 px-2 text-silver">{u.username || '—'}</td>
+                      <td className="py-2 px-2"><span className={u.role === 'ADMIN' ? 'text-amber-400' : 'text-silver'}>{u.role}</span></td>
+                      <td className="py-2 px-2 text-silver">{u._count?.inventoryItems || 0}</td>
+                      <td className="py-2 px-2">
+                        <button onClick={() => deleteUser(u.id)} className="text-red-400 text-xs hover:underline">Del</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

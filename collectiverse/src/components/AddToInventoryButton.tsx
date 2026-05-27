@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Props {
@@ -12,7 +12,29 @@ export default function AddToInventoryButton({ cardId }: Props) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/me').then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.user) {
+        setIsLoggedIn(true);
+        if (d.user.role === 'ADMIN') setIsAdmin(true);
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Admins don't have collections
+  if (isAdmin) return null;
+  // Not logged in — show prompt
+  if (!isLoggedIn) {
+    return (
+      <a href="/login" className="btn-primary w-full justify-center text-center block">
+        Sign in to add to your inventory
+      </a>
+    );
+  }
 
   const [form, setForm] = useState({
     quantity: '1',

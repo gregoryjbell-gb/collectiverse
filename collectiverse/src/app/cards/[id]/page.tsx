@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import type { Metadata } from 'next';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
+import AddToInventoryButton from '@/components/AddToInventoryButton';
 
 interface Props { params: { id: string } }
 
@@ -68,6 +69,9 @@ export default async function CardPage({ params }: Props) {
               </div>
             )}
             <QRCodeDisplay cardId={card.id} />
+            <div className="mt-4">
+              <AddToInventoryButton cardId={card.id} />
+            </div>
           </div>
 
           {/* Right: Details */}

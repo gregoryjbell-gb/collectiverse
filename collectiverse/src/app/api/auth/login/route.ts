@@ -1,26 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdmin, signToken } from '@/lib/auth';
+import { verifyAdmin, verifyUser, signToken } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
-  const { username, password } = await req.json();
-  if (!username || !password) {
-    return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
+  const { username, password, email } = await req.json();
+  const login = username || email;
+
+  if (!login || !password) {
+    return NextResponse.json({ error: 'Login and password required' }, { status: 400 });
   }
 
-  const admin = await verifyAdmin(username, password);
-  if (!admin) {
-    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+  // Try user table first
+  const user = await verifyUser(login, password);
+  if (user) {
+    const token = signToken({ sub: user.id, username: user.username, role: user.role });
+    const response = NextResponse.json({ success: true, username: user.username, role: user.role });
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+    return response;
   }
 
-  const token = signToken({ sub: admin.id, username: admin.username });
-  const response = NextResponse.json({ success: true, username: admin.username });
-  response.cookies.set('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7,
-    path: '/',
-  });
+  // Fall back to legacy admin table
+  const admin = await verifyAdmin(login, password);
+  if (admin) {
+    const token = signToken({ sub: admin.id, username: admin.username, role: 'ADMIN' });
+    const response = NextResponse.json({ success: true, username: admin.username, role: 'ADMIN' });
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+    return response;
+  }
 
-  return response;
+  return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
 }

@@ -126,6 +126,7 @@ model Card {
   transactions    Transaction[]
   qrScans         QrScan[]
   media           CardMedia[]
+  inventoryItems  InventoryItem[]
 
   @@map("cards")
 }
@@ -220,4 +221,64 @@ model Admin {
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("admins")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String?  @unique
+  passwordHash String   @map("password_hash")
+  displayName  String?  @map("display_name")
+  role         String   @default("USER") // USER, ADMIN
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  inventoryItems InventoryItem[]
+
+  @@map("users")
+}
+
+model InventoryItem {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  cardId          String    @map("card_id")
+  quantity        Int       @default(1)
+  condition       String?   // RAW, PSA, BGS, SGC, CGC
+  gradeCompany    String?   @map("grade_company")
+  gradeValue      String?   @map("grade_value")
+  certNumber      String?   @map("cert_number")
+  acquisitionDate DateTime? @map("acquisition_date")
+  purchasePrice   Float?    @map("purchase_price")
+  estimatedValue  Float?    @map("estimated_value")
+  askingPrice     Float?    @map("asking_price")
+  status          String    @default("OWNED") // OWNED, FOR_SALE, SOLD, TRADE_ONLY, WATCHLIST
+  storageLocation String?   @map("storage_location")
+  notes           String?
+  privateImageUrl String?   @map("private_image_url")
+  frontScanUrl    String?   @map("front_scan_url")
+  backScanUrl     String?   @map("back_scan_url")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card         Card                   @relation(fields: [cardId], references: [id])
+  transactions InventoryTransaction[]
+
+  @@map("inventory_items")
+}
+
+model InventoryTransaction {
+  id              String    @id @default(cuid())
+  inventoryItemId String    @map("inventory_item_id")
+  type            String    // PURCHASE, SALE, TRADE, GRADE_SUBMISSION, VALUE_UPDATE
+  amount          Float?
+  marketplace     String?
+  counterparty    String?
+  transactionDate DateTime? @map("transaction_date")
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  @@map("inventory_transactions")
 }

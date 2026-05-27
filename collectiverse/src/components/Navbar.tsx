@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -13,7 +13,23 @@ const navLinks = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<{ username?: string; role?: string } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.user) setUser(d.user); })
+      .catch(() => {});
+  }, [pathname]);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setUser(null);
+    router.push('/');
+    router.refresh();
+  };
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -45,18 +61,59 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Right side: My Collection + Admin */}
+        {/* Right side */}
         <div className="hidden md:flex items-center gap-3">
-          <Link
-            href="/admin"
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              pathname.startsWith('/admin')
-                ? 'bg-electric text-white'
-                : 'border border-silver/20 text-silver hover:text-white hover:border-silver/40'
-            }`}
-          >
-            Admin
-          </Link>
+          {user ? (
+            <>
+              <Link
+                href="/dashboard"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pathname.startsWith('/dashboard') || pathname.startsWith('/inventory')
+                    ? 'bg-electric/15 text-electric'
+                    : 'text-silver hover:text-white hover:bg-silver/5'
+                }`}
+              >
+                My Collection
+              </Link>
+              {(user.role === 'ADMIN') && (
+                <Link
+                  href="/admin"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    pathname.startsWith('/admin')
+                      ? 'bg-electric/15 text-electric'
+                      : 'text-silver hover:text-white hover:bg-silver/5'
+                  }`}
+                >
+                  Admin
+                </Link>
+              )}
+              <button
+                onClick={handleLogout}
+                className="px-3 py-2 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5 transition-colors"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pathname === '/login'
+                    ? 'bg-electric/15 text-electric'
+                    : 'text-silver hover:text-white hover:bg-silver/5'
+                }`}
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="btn-primary text-sm px-4 py-2"
+              >
+                Register
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -94,13 +151,33 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="border-t border-silver/10 pt-3 mt-3 space-y-1">
-            <Link
-              href="/admin"
-              onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5"
-            >
-              Admin Dashboard
-            </Link>
+            {user ? (
+              <>
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">
+                  My Collection
+                </Link>
+                <Link href="/inventory" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">
+                  Inventory
+                </Link>
+                {user.role === 'ADMIN' && (
+                  <Link href="/admin" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">
+                    Admin
+                  </Link>
+                )}
+                <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">
+                  Sign In
+                </Link>
+                <Link href="/register" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-electric hover:bg-silver/5">
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

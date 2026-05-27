@@ -5,31 +5,69 @@ import { prisma } from './prisma';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me-in-production';
 
-export function signToken(payload: { sub: string; username: string }) {
+export interface SessionPayload {
+  sub: string;
+  username: string;
+  role: string;
+}
+
+export function signToken(payload: { sub: string; username: string; role: string }) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 }
 
-export function verifyToken(token: string) {
+export function verifyToken(token: string): SessionPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as { sub: string; username: string };
+    return jwt.verify(token, JWT_SECRET) as SessionPayload;
   } catch {
     return null;
   }
 }
 
-export async function getSession() {
+export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = cookies();
   const token = cookieStore.get('token')?.value;
   if (!token) return null;
-  const payload = verifyToken(token);
-  if (!payload) return null;
-  return { id: payload.sub, username: payload.username };
+  return verifyToken(token);
 }
 
+export async function requireSession(): Promise<SessionPayload> {
+  const session = await getSession();
+  if (!session) throw new Error('Unauthorized');
+  return session;
+}
+
+export async function requireAdmin(): Promise<SessionPayload> {
+  const session = await getSession();
+  if (!session || session.role !== 'ADMIN') throw new Error('Unauthorized');
+  return session;
+}
+
+// Verify admin (legacy admin table)
 export async function verifyAdmin(username: string, password: string) {
   const admin = await prisma.admin.findUnique({ where: { username } });
   if (!admin) return null;
   const valid = bcrypt.compareSync(password, admin.passwordHash);
   if (!valid) return null;
-  return { id: admin.id, username: admin.username };
+  return { id: admin.id, username: admin.username, role: 'ADMIN' as const };
+}
+
+// Verify user (new user table)
+export async function verifyUser(login: string, password: string) {
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ email: login }, { username: login }] },
+  });
+  if (!user) return null;
+  const valid = bcrypt.compareSync(password, user.passwordHash);
+  if (!valid) return null;
+  return { id: user.id, username: user.username || user.email, role: user.role };
+}
+
+export function hashPassword(password: string) {
+  return bcrypt.hashSync(password, 10);
+}
+
+export function setTokenCookie(token: string) {
+  return {
+    'Set-Cookie': `token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`,
+  };
 }

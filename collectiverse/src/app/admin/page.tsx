@@ -66,18 +66,31 @@ export default function AdminPage() {
 }
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<'overview' | 'cards' | 'players'>('overview');
+  const [tab, setTab] = useState<'overview' | 'cards' | 'players' | 'sets' | 'users'>('overview');
   const [analytics, setAnalytics] = useState<any>(null);
   const [cards, setCards] = useState<any[]>([]);
   const [players, setPlayers] = useState<any[]>([]);
+  const [sets, setSets] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [showSetForm, setShowSetForm] = useState(false);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [setForm, setSetForm] = useState({ name: '', year: '', manufacturer: '', sportId: '' });
+  const [userForm, setUserForm] = useState({ email: '', username: '', password: '', displayName: '', role: 'USER' });
+  const [sports, setSports] = useState<any[]>([]);
 
   useEffect(() => {
     fetch('/api/admin/analytics').then((r) => r.json()).then(setAnalytics);
+    fetch('/api/search?q=').then((r) => r.json()).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (tab === 'cards') fetch('/api/admin/cards').then((r) => r.json()).then((d) => setCards(d.cards || []));
     if (tab === 'players') fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
+    if (tab === 'sets') {
+      fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
+      fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
+    }
+    if (tab === 'users') fetch('/api/admin/users').then((r) => r.json()).then((d) => setUsers(d.users || []));
   }, [tab]);
 
   const deleteCard = async (id: string) => {
@@ -92,6 +105,39 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setPlayers(players.filter((p) => p.id !== id));
   };
 
+  const deleteSet = async (id: string) => {
+    if (!confirm('Delete this set? Cards in this set will be unlinked.')) return;
+    await fetch(`/api/admin/sets/${id}`, { method: 'DELETE' });
+    setSets(sets.filter((s) => s.id !== id));
+  };
+
+  const deleteUser = async (id: string) => {
+    if (!confirm('Delete this user and all their inventory?')) return;
+    const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+    if (res.ok) setUsers(users.filter((u) => u.id !== id));
+    else { const d = await res.json(); alert(d.error); }
+  };
+
+  const createSet = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch('/api/admin/sets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(setForm) });
+    if (res.ok) {
+      setShowSetForm(false);
+      setSetForm({ name: '', year: '', manufacturer: '', sportId: '' });
+      fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
+    }
+  };
+
+  const createUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch('/api/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userForm) });
+    if (res.ok) {
+      setShowUserForm(false);
+      setUserForm({ email: '', username: '', password: '', displayName: '', role: 'USER' });
+      fetch('/api/admin/users').then((r) => r.json()).then((d) => setUsers(d.users || []));
+    } else { const d = await res.json(); alert(d.error); }
+  };
+
   return (
     <main className="min-h-screen py-8 px-6">
       <div className="max-w-6xl mx-auto">
@@ -100,8 +146,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           <button onClick={onLogout} className="btn-secondary text-sm">Logout</button>
         </div>
 
-        <nav className="flex gap-2 mb-8">
-          {(['overview', 'cards', 'players'] as const).map((t) => (
+        <nav className="flex gap-2 mb-8 flex-wrap">
+          {(['overview', 'cards', 'players', 'sets', 'users'] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg capitalize transition-colors ${tab === t ? 'bg-electric text-white' : 'bg-gunmetal/50 text-silver hover:text-white'}`}>
               {t}
             </button>
@@ -174,6 +220,76 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {tab === 'sets' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-silver text-sm">{sets.length} sets</p>
+              <button onClick={() => setShowSetForm(!showSetForm)} className="btn-primary text-sm">{showSetForm ? 'Cancel' : '+ Add Set'}</button>
+            </div>
+            {showSetForm && (
+              <form onSubmit={createSet} className="card-surface p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <input className="input-field text-sm" placeholder="Name *" value={setForm.name} onChange={e => setSetForm({...setForm, name: e.target.value})} required />
+                <input type="number" className="input-field text-sm" placeholder="Year *" value={setForm.year} onChange={e => setSetForm({...setForm, year: e.target.value})} required />
+                <input className="input-field text-sm" placeholder="Manufacturer" value={setForm.manufacturer} onChange={e => setSetForm({...setForm, manufacturer: e.target.value})} />
+                <button type="submit" className="btn-primary text-sm">Create</button>
+              </form>
+            )}
+            <div className="space-y-3">
+              {sets.map((s) => (
+                <div key={s.id} className="card-surface p-4 flex justify-between items-center">
+                  <div>
+                    <p className="font-medium">{s.name}</p>
+                    <p className="text-sm text-silver">{s.manufacturer || 'Unknown'} • {s.year} • {s.sport?.name || 'No sport'} • {s._count?.cards || 0} cards</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <a href={`/sets/${s.id}`} className="text-electric text-sm hover:underline">View</a>
+                    <button onClick={() => deleteSet(s.id)} className="text-red-400 text-sm hover:underline">Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'users' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-silver text-sm">{users.length} users</p>
+              <button onClick={() => setShowUserForm(!showUserForm)} className="btn-primary text-sm">{showUserForm ? 'Cancel' : '+ Add User'}</button>
+            </div>
+            {showUserForm && (
+              <form onSubmit={createUser} className="card-surface p-4 mb-4 space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <input type="email" className="input-field text-sm" placeholder="Email *" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} required />
+                  <input className="input-field text-sm" placeholder="Username" value={userForm.username} onChange={e => setUserForm({...userForm, username: e.target.value})} />
+                  <input type="password" className="input-field text-sm" placeholder="Password *" value={userForm.password} onChange={e => setUserForm({...userForm, password: e.target.value})} required />
+                  <input className="input-field text-sm" placeholder="Display Name" value={userForm.displayName} onChange={e => setUserForm({...userForm, displayName: e.target.value})} />
+                </div>
+                <div className="flex gap-3 items-center">
+                  <select className="input-field text-sm w-auto" value={userForm.role} onChange={e => setUserForm({...userForm, role: e.target.value})}>
+                    <option value="USER">USER</option>
+                    <option value="ADMIN">ADMIN</option>
+                  </select>
+                  <button type="submit" className="btn-primary text-sm">Create User</button>
+                </div>
+              </form>
+            )}
+            <div className="space-y-3">
+              {users.map((u) => (
+                <div key={u.id} className="card-surface p-4 flex justify-between items-center">
+                  <div>
+                    <p className="font-medium">{u.displayName || u.username || u.email}</p>
+                    <p className="text-sm text-silver">{u.email} • <span className={u.role === 'ADMIN' ? 'text-amber-400' : 'text-silver'}>{u.role}</span> • {u._count?.inventoryItems || 0} inventory items</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => deleteUser(u.id)} className="text-red-400 text-sm hover:underline">Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

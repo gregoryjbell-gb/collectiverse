@@ -58,6 +58,8 @@ export default async function PlayerPage({ params }: Props) {
             achievements: person.achievements,
             hallOfFame: person.hallOfFame,
             aliases: person.aliases,
+            funFacts: person.funFacts,
+            whyCollectorsCare: person.whyCollectorsCare,
           }} />
         </div>
 
@@ -95,12 +97,29 @@ export default async function PlayerPage({ params }: Props) {
             <div className="card-surface p-6">
               <h2 className="text-xl font-semibold mb-3">Why Collectors Care</h2>
               <p className="text-silver">
-                {person.hallOfFame
-                  ? `${person.displayName} is a Hall of Famer whose cards carry lasting legacy value. Key rookies and autos are cornerstone pieces for serious collectors.`
-                  : `${person.displayName} is an active player whose card values are tied to on-field performance. Early cards and limited parallels offer upside potential.`
+                {person.whyCollectorsCare
+                  ? person.whyCollectorsCare
+                  : person.hallOfFame
+                    ? `${person.displayName} is a Hall of Famer whose cards carry lasting legacy value. Key rookies and autos are cornerstone pieces for serious collectors.`
+                    : `${person.displayName} is an active player whose card values are tied to on-field performance. Early cards and limited parallels offer upside potential.`
                 }
               </p>
             </div>
+
+            {/* Fun Facts */}
+            {person.funFacts.length > 0 && (
+              <div className="card-surface p-6">
+                <h2 className="text-xl font-semibold mb-4">Fun Facts</h2>
+                <ul className="space-y-2">
+                  {person.funFacts.map((fact, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <span className="text-electric mt-0.5">•</span>
+                      <span className="text-silver">{fact}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}

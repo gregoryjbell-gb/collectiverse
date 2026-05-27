@@ -11,6 +11,8 @@ interface Props {
     achievements?: string[];
     hallOfFame?: boolean;
     aliases?: string[];
+    funFacts?: string[];
+    whyCollectorsCare?: string | null;
   };
 }
 
@@ -27,6 +29,8 @@ export default function AdminEditPlayer({ playerId, initialData }: Props) {
     achievements: (initialData.achievements || []).join('\n'),
     hallOfFame: initialData.hallOfFame || false,
     aliases: (initialData.aliases || []).join(', '),
+    funFacts: (initialData.funFacts || []).join('\n'),
+    whyCollectorsCare: initialData.whyCollectorsCare || '',
   });
 
   useEffect(() => {
@@ -48,6 +52,8 @@ export default function AdminEditPlayer({ playerId, initialData }: Props) {
         achievements: form.achievements.split('\n').filter((a: string) => a.trim()),
         hallOfFame: form.hallOfFame,
         aliases: form.aliases.split(',').map((a: string) => a.trim()).filter(Boolean),
+        funFacts: form.funFacts.split('\n').filter((f: string) => f.trim()),
+        whyCollectorsCare: form.whyCollectorsCare || null,
       };
 
       const res = await fetch(`/api/admin/players/${playerId}`, {
@@ -85,6 +91,16 @@ export default function AdminEditPlayer({ playerId, initialData }: Props) {
       <div>
         <label className="text-xs text-silver block mb-1">Biography</label>
         <textarea className="input-field text-sm min-h-[100px]" value={form.biography} onChange={e => setForm({...form, biography: e.target.value})} />
+      </div>
+
+      <div>
+        <label className="text-xs text-silver block mb-1">Why Collectors Care</label>
+        <textarea className="input-field text-sm min-h-[80px]" value={form.whyCollectorsCare} onChange={e => setForm({...form, whyCollectorsCare: e.target.value})} placeholder="Custom text explaining why this player matters to collectors..." />
+      </div>
+
+      <div>
+        <label className="text-xs text-silver block mb-1">Fun Facts (one per line)</label>
+        <textarea className="input-field text-sm min-h-[80px]" value={form.funFacts} onChange={e => setForm({...form, funFacts: e.target.value})} placeholder="One fun fact per line..." />
       </div>
 
       <div>

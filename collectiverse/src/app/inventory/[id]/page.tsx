@@ -124,8 +124,10 @@ export default function InventoryDetailPage() {
               {item.notes && <div className="mt-3 pt-3 border-t border-silver/10"><p className="text-xs text-silver">{item.notes}</p></div>}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2">
               <Link href={`/inventory/${item.id}/edit`} className="btn-primary text-sm">Edit</Link>
+              <Link href={`/listings/add?itemId=${item.id}`} className="btn-secondary text-sm">Create Listing</Link>
+              <Link href={`/qr-labels`} className="btn-secondary text-sm">QR Label</Link>
               <button onClick={() => { if (confirm('Delete?')) { fetch(`/api/inventory/${item.id}`, { method: 'DELETE' }).then(() => router.push('/inventory')); } }} className="btn-danger text-sm">Delete</button>
             </div>
           </div>

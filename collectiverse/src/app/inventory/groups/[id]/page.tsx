@@ -59,9 +59,11 @@ export default function GroupDetailPage() {
               </div>
               {group.description && <p className="text-silver text-sm">{group.description}</p>}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {group.sealed && <button onClick={handleOpen} className="btn-secondary text-xs">Open / Break</button>}
               <Link href={`/inventory/groups/${id}/edit`} className="btn-primary text-xs">Edit</Link>
+              <Link href={`/listings/add?groupId=${id}`} className="btn-secondary text-xs">Create Listing</Link>
+              <Link href="/qr-labels" className="btn-secondary text-xs">QR Label</Link>
             </div>
           </div>
         </div>

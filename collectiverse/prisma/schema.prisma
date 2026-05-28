@@ -555,3 +555,39 @@ model Feedback {
   @@index([toUserId])
   @@map("feedbacks")
 }
+
+model Dispute {
+  id              String    @id @default(cuid())
+  openedByUserId  String    @map("opened_by_user_id")
+  againstUserId   String    @map("against_user_id")
+  listingId       String?   @map("listing_id")
+  offerId         String?   @map("offer_id")
+  transferId      String?   @map("transfer_id")
+  status          String    @default("OPEN") // OPEN, UNDER_REVIEW, WAITING_FOR_BUYER, WAITING_FOR_SELLER, RESOLVED, CLOSED, CANCELLED
+  reason          String    // ITEM_NOT_RECEIVED, ITEM_NOT_AS_DESCRIBED, DAMAGED_IN_TRANSIT, COUNTERFEIT_CONCERN, PAYMENT_ISSUE, TRANSFER_ISSUE, OTHER
+  description     String
+  resolution      String?   // REFUND, PARTIAL_REFUND, RETURN, NO_ACTION, ACCOUNT_ACTION, OTHER
+  adminNotes      String?   @map("admin_notes")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  resolvedAt      DateTime? @map("resolved_at")
+
+  messages DisputeMessage[]
+
+  @@index([openedByUserId])
+  @@index([againstUserId])
+  @@map("disputes")
+}
+
+model DisputeMessage {
+  id            String   @id @default(cuid())
+  disputeId     String   @map("dispute_id")
+  userId        String   @map("user_id")
+  message       String
+  attachmentUrl String?  @map("attachment_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  dispute Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  @@map("dispute_messages")
+}

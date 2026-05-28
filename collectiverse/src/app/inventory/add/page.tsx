@@ -41,6 +41,9 @@ function InventoryAddForm() {
   const [selectedCard, setSelectedCard] = useState<CardResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [scanImageUrl, setScanImageUrl] = useState('');
+  const scanRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     quantity: '1',
@@ -92,6 +95,48 @@ function InventoryAddForm() {
       setError(err.message);
     } finally {
       setCreatingCard(false);
+    }
+  };
+
+  const handleScanUpload = async (file: File) => {
+    setScanning(true);
+    setError('');
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await fetch('/api/cards/identify', { method: 'POST', body: fd });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      const { suggestion } = await res.json();
+
+      // Store the image URL for later use as frontScan
+      if (suggestion.imageUrl) setScanImageUrl(suggestion.imageUrl);
+
+      // If AI returned suggestions, prefill search or create form
+      if (suggestion.playerName) {
+        setSearchQuery(suggestion.playerName);
+        // Also prefill the create card form
+        setNewCardForm({
+          ...newCardForm,
+          playerName: suggestion.playerName || '',
+          sportName: suggestion.sportName || '',
+          year: suggestion.year || '',
+          setName: suggestion.setName || '',
+          manufacturer: suggestion.manufacturer || '',
+          cardNumber: suggestion.cardNumber || '',
+          teamName: suggestion.teamName || '',
+          parallel: suggestion.parallel || '',
+          rookie: suggestion.rookie || false,
+          frontImageUrl: suggestion.imageUrl || '',
+        });
+      }
+
+      if (suggestion.message) {
+        setError(suggestion.message);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setScanning(false);
     }
   };
 
@@ -154,6 +199,13 @@ function InventoryAddForm() {
         if (backFile) fd.append('backScan', backFile);
         if (privateFile) fd.append('privateImage', privateFile);
         await fetch(`/api/inventory/${item.id}/upload`, { method: 'POST', body: fd });
+      } else if (scanImageUrl) {
+        // Use the scan image as frontScanUrl
+        await fetch(`/api/inventory/${item.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ frontScanUrl: scanImageUrl }),
+        });
       }
 
       router.push('/inventory');
@@ -173,7 +225,22 @@ function InventoryAddForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Card Search & Selection */}
           <div className="card-surface p-6">
-            <h2 className="font-semibold mb-3">1. Select Card from Database</h2>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="font-semibold">1. Select Card from Database</h2>
+              <div>
+                <input ref={scanRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleScanUpload(f); }} />
+                <button type="button" onClick={() => scanRef.current?.click()} disabled={scanning} className="btn-secondary text-xs">
+                  {scanning ? 'Scanning...' : '📷 Scan / Upload Card'}
+                </button>
+              </div>
+            </div>
+
+            {scanImageUrl && !selectedCard && (
+              <div className="mb-3 flex items-center gap-3 bg-navy/50 rounded-lg p-2">
+                <img src={scanImageUrl} alt="Scanned card" className="w-16 h-20 object-cover rounded" />
+                <p className="text-xs text-silver">Image saved. Fill in details below or search to match an existing card.</p>
+              </div>
+            )}
 
             {selectedCard ? (
               <div className="flex items-center justify-between bg-navy/50 rounded-lg px-4 py-3 border border-electric/30">

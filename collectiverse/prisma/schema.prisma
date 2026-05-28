@@ -403,3 +403,23 @@ model InventoryGroupItem {
   @@unique([inventoryGroupId, inventoryItemId])
   @@map("inventory_group_items")
 }
+
+model Listing {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  inventoryItemId  String?   @map("inventory_item_id")
+  inventoryGroupId String?   @map("inventory_group_id")
+  listingType      String    @map("listing_type") // ITEM, GROUP
+  status           String    @default("DRAFT") // DRAFT, ACTIVE, PAUSED, SOLD, CANCELLED
+  price            Float?
+  minimumOffer     Float?    @map("minimum_offer")
+  allowOffers      Boolean   @default(false) @map("allow_offers")
+  allowTrades      Boolean   @default(false) @map("allow_trades")
+  description      String?
+  shippingNotes    String?   @map("shipping_notes")
+  soldAt           DateTime? @map("sold_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@map("listings")
+}

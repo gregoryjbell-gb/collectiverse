@@ -8,6 +8,8 @@ export async function GET(req: NextRequest) {
 
   const where: any = { status: 'ACTIVE' };
   if (q) where.description = { contains: q, mode: 'insensitive' };
+  const sellerId = req.nextUrl.searchParams.get('sellerId');
+  if (sellerId) where.userId = sellerId;
 
   const [listings, total] = await Promise.all([
     (prisma as any).listing.findMany({

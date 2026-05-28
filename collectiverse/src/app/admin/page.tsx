@@ -66,7 +66,7 @@ export default function AdminPage() {
 }
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<'overview' | 'cards' | 'players' | 'sets' | 'sports' | 'users'>('overview');
+  const [tab, setTab] = useState<'overview' | 'cards' | 'players' | 'sets' | 'sports' | 'teams' | 'users'>('overview');
   const [analytics, setAnalytics] = useState<any>(null);
   const [cards, setCards] = useState<any[]>([]);
   const [players, setPlayers] = useState<any[]>([]);
@@ -89,6 +89,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [showPlayerForm, setShowPlayerForm] = useState(false);
   const [playerForm, setPlayerForm] = useState({ displayName: '', biography: '', hallOfFame: false });
   const [teams, setTeams] = useState<any[]>([]);
+  const [showTeamForm, setShowTeamForm] = useState(false);
+  const [teamForm, setTeamForm] = useState({ name: '', sportId: '', city: '' });
 
   useEffect(() => {
     fetch('/api/admin/analytics').then((r) => r.json()).then(setAnalytics);
@@ -110,6 +112,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
     }
     if (tab === 'sports') {
+      fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
+    }
+    if (tab === 'teams') {
+      fetch('/api/admin/teams').then((r) => r.ok ? r.json() : { teams: [] }).then((d) => setTeams(d.teams || [])).catch(() => {});
       fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
     }
     if (tab === 'users') fetch('/api/admin/users').then((r) => r.json()).then((d) => setUsers(d.users || []));
@@ -194,6 +200,21 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
     } else { const d = await res.json(); alert(d.error || 'Failed to create player'); }
   };
+  const createTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!teamForm.name || !teamForm.sportId) { alert('Name and sport are required'); return; }
+    const res = await fetch('/api/admin/teams', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(teamForm) });
+    if (res.ok) {
+      setShowTeamForm(false);
+      setTeamForm({ name: '', sportId: '', city: '' });
+      fetch('/api/admin/teams').then((r) => r.ok ? r.json() : { teams: [] }).then((d) => setTeams(d.teams || []));
+    } else { const d = await res.json(); alert(d.error || 'Failed to create team'); }
+  };
+  const deleteTeam = async (id: string) => {
+    if (!confirm('Delete this team?')) return;
+    await fetch(`/api/admin/teams/${id}`, { method: 'DELETE' });
+    setTeams(teams.filter(t => t.id !== id));
+  };
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch('/api/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userForm) });
@@ -226,7 +247,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
 
         <nav className="flex gap-2 mb-8 flex-wrap">
-          {(['overview', 'cards', 'players', 'sets', 'sports', 'users'] as const).map((t) => (
+          {(['overview', 'cards', 'players', 'sets', 'sports', 'teams', 'users'] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg capitalize transition-colors ${tab === t ? 'bg-electric text-white' : 'bg-gunmetal/50 text-silver hover:text-white'}`}>
               {t}
             </button>
@@ -482,6 +503,46 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <td className="py-2 px-2 text-silver">{sp.league || '—'}</td>
                       <td className="py-2 px-2">
                         <button onClick={() => deleteSport(sp.id)} className="text-red-400 text-xs hover:underline">Del</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Teams */}
+        {tab === 'teams' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-silver text-sm">{teams.length} teams</span>
+              <button onClick={() => setShowTeamForm(!showTeamForm)} className="btn-primary text-sm">{showTeamForm ? 'Cancel' : '+ Add Team'}</button>
+            </div>
+            {showTeamForm && (
+              <form onSubmit={createTeam} className="card-surface p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <input className="input-field text-sm" placeholder="Team Name *" value={teamForm.name} onChange={e => setTeamForm({...teamForm, name: e.target.value})} required />
+                <select className="input-field text-sm" value={teamForm.sportId} onChange={e => setTeamForm({...teamForm, sportId: e.target.value})} required>
+                  <option value="">Sport *</option>
+                  {sports.map(sp => <option key={sp.id} value={sp.id}>{sp.name}</option>)}
+                </select>
+                <input className="input-field text-sm" placeholder="City" value={teamForm.city} onChange={e => setTeamForm({...teamForm, city: e.target.value})} />
+                <button type="submit" className="btn-primary text-sm">Create Team</button>
+              </form>
+            )}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-silver/20 text-left text-silver text-xs">
+                  <th className="py-2 px-2">Name</th><th className="py-2 px-2">Sport</th><th className="py-2 px-2">City</th><th className="py-2 px-2">Actions</th>
+                </tr></thead>
+                <tbody>
+                  {teams.map(t => (
+                    <tr key={t.id} className="border-b border-silver/10 hover:bg-silver/5">
+                      <td className="py-2 px-2 font-medium">{t.name}</td>
+                      <td className="py-2 px-2 text-silver">{t.sport?.name || '—'}</td>
+                      <td className="py-2 px-2 text-silver">{t.city || '—'}</td>
+                      <td className="py-2 px-2">
+                        <button onClick={() => deleteTeam(t.id)} className="text-red-400 text-xs hover:underline">Del</button>
                       </td>
                     </tr>
                   ))}

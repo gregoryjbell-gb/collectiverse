@@ -6,3 +6,6 @@ dist/
 .env.local
 *.db
 .DS_Store
+public/uploads/users/
+public/uploads/intake/
+public/uploads/inventory/

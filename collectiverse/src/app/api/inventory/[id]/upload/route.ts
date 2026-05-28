@@ -17,16 +17,21 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  // Get userId from session only — never trust client
   let userId: string;
   try { userId = await ensureUserId(session); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
 
-  // Verify ownership
+  // Verify ownership: item must belong to authenticated user
   const item = await prisma.inventoryItem.findFirst({ where: { id: params.id, userId } });
   if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const formData = await req.formData();
   const updateData: Record<string, string> = {};
   const urls: Record<string, string> = {};
+
+  // Storage path: /public/uploads/users/{userId}/inventory/{inventoryItemId}/
+  const dir = join(process.cwd(), 'public', 'uploads', 'users', userId, 'inventory', params.id);
+  await mkdir(dir, { recursive: true });
 
   for (const [fieldName, dbField] of Object.entries(FIELD_MAP)) {
     const file = formData.get(fieldName);
@@ -42,19 +47,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: `${fieldName} exceeds 10 MB limit` }, { status: 400 });
     }
 
-    // Generate safe filename
+    // Generate safe unique filename — never use original filename
     const ext = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp';
-    const filename = `${randomUUID()}.${ext}`;
-    const dir = join(process.cwd(), 'public', 'uploads', 'inventory', userId, params.id);
-    await mkdir(dir, { recursive: true });
+    const filename = `${fieldName}-${randomUUID()}.${ext}`;
 
     // Write file
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filepath = join(dir, filename);
-    await writeFile(filepath, buffer);
+    await writeFile(join(dir, filename), buffer);
 
-    // URL path
-    const url = `/uploads/inventory/${userId}/${params.id}/${filename}`;
+    // URL path (relative to public/)
+    const url = `/uploads/users/${userId}/inventory/${params.id}/${filename}`;
     updateData[dbField] = url;
     urls[fieldName] = url;
   }
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: 'No valid files uploaded' }, { status: 400 });
   }
 
-  // Update inventory item
+  // Update inventory item with new URLs
   await prisma.inventoryItem.update({
     where: { id: params.id },
     data: updateData,

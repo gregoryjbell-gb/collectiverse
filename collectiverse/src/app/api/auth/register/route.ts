@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { signToken, hashPassword } from '@/lib/auth';
+import { mkdir } from 'fs/promises';
+import { join } from 'path';
 
 export async function POST(req: NextRequest) {
   const { email, username, password, displayName } = await req.json();
@@ -27,6 +29,10 @@ export async function POST(req: NextRequest) {
       displayName: displayName || username || email.split('@')[0],
     },
   });
+
+  // Create user upload directories
+  const userDir = join(process.cwd(), 'public', 'uploads', 'users', user.id, 'inventory');
+  await mkdir(userDir, { recursive: true }).catch(() => {});
 
   const token = signToken({ sub: user.id, username: user.username || user.email, role: user.role });
   const response = NextResponse.json({

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, ensureUserId } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { mkdir } from 'fs/promises';
+import { join } from 'path';
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -129,6 +131,10 @@ export async function POST(req: NextRequest) {
     },
     include: { card: { include: { person: true, set: true, team: true } } },
   });
+
+  // Create user-specific inventory item folder
+  const itemDir = join(process.cwd(), 'public', 'uploads', 'users', userId, 'inventory', item.id);
+  await mkdir(itemDir, { recursive: true }).catch(() => {});
 
   if (purchasePrice) {
     await prisma.inventoryTransaction.create({

@@ -472,3 +472,22 @@ model MarketValueSnapshot {
   @@index([inventoryGroupId, capturedAt])
   @@map("market_value_snapshots")
 }
+
+model WishlistItem {
+  id                  String   @id @default(cuid())
+  userId              String   @map("user_id")
+  cardId              String?  @map("card_id")
+  cardSetId           String?  @map("card_set_id")
+  collectibleCategory String?  @map("collectible_category")
+  priority            String   @default("MEDIUM") // LOW, MEDIUM, HIGH, GRAIL
+  targetPrice         Float?   @map("target_price")
+  desiredGradeCompany String?  @map("desired_grade_company")
+  desiredGradeValue   String?  @map("desired_grade_value")
+  notes               String?
+  status              String   @default("ACTIVE") // ACTIVE, ACQUIRED, ARCHIVED
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@index([userId, status])
+  @@map("wishlist_items")
+}

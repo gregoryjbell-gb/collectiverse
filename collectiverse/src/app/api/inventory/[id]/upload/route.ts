@@ -20,7 +20,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   let userId: string;
   try { userId = await ensureUserId(session); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
 
-  // Verify ownership
   const item = await prisma.inventoryItem.findFirst({ where: { id: params.id, userId } });
   if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -28,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const updateData: Record<string, string> = {};
   const urls: Record<string, string> = {};
 
-  // Private storage path: storage/private/users/{userId}/inventory/{itemId}/
+  // Private storage: storage/private/users/{userId}/inventory/{itemId}/
   const privateDir = join(process.cwd(), 'storage', 'private', 'users', userId, 'inventory', params.id);
   await mkdir(privateDir, { recursive: true });
 
@@ -44,20 +43,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: `${fieldName} exceeds 10 MB limit` }, { status: 400 });
     }
 
-    // Generate safe unique filename
     const ext = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp';
     const filename = `${fieldName}-${randomUUID()}.${ext}`;
 
-    // Write to private storage (NOT public/)
     const buffer = Buffer.from(await file.arrayBuffer());
     await writeFile(join(privateDir, filename), buffer);
 
-    // Store relative path for the media delivery API to resolve
-    // The client will access via: /api/inventory/{id}/media/{type}
-    const storedPath = `/uploads/users/${userId}/inventory/${params.id}/${filename}`;
-    updateData[dbField] = storedPath;
+    // Store only the filename in the DB — media route resolves the full path
+    updateData[dbField] = filename;
 
-    // Return the authenticated media URL (not the filesystem path)
+    // Return the authenticated media URL to the client
     const mediaType = fieldName === 'frontScan' ? 'front' : fieldName === 'backScan' ? 'back' : 'private';
     urls[fieldName] = `/api/inventory/${params.id}/media/${mediaType}`;
   }
@@ -66,11 +61,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: 'No valid files uploaded' }, { status: 400 });
   }
 
-  // Update inventory item with storage references
-  await prisma.inventoryItem.update({
-    where: { id: params.id },
-    data: updateData,
-  });
+  await prisma.inventoryItem.update({ where: { id: params.id }, data: updateData });
 
   return NextResponse.json({ urls, message: 'Upload successful' });
 }

@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const data = await req.json();
-  const { playerName, sportName, year, setName, manufacturer, cardNumber, teamName, parallel, rookie, autograph, relic, serialNumber, printRun, frontImageUrl, backImageUrl, funFacts, whyItMatters, cardCategory, franchise, characterName, actorName, artistName, subjectName, universe, genre } = data;
+  const { playerName, sportName, year, setName, manufacturer, cardNumber, teamName, parallel, rookie, autograph, relic, serialNumber, printRun, frontImageUrl, backImageUrl, funFacts, whyItMatters, cardCategory, collectibleType, franchise, characterName, actorName, artistName, subjectName, universe, genre } = data;
 
   if (!playerName || !year || !setName || !cardNumber) {
     return NextResponse.json({ error: 'playerName, year, setName, and cardNumber are required' }, { status: 400 });
@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
       funFacts: funFacts || [],
       whyItMatters: whyItMatters || null,
       cardCategory: cardCategory || 'SPORTS',
+      collectibleType: collectibleType || 'SPORTS_CARD',
       franchise: franchise || null,
       characterName: characterName || null,
       actorName: actorName || null,

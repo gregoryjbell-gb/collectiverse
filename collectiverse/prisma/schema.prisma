@@ -123,6 +123,7 @@ model Card {
   inventoryLocation     String?  @map("inventory_location")
   funFacts              String[] @default([]) @map("fun_facts")
   cardCategory          String   @default("SPORTS") @map("card_category") // SPORTS, TCG, ENTERTAINMENT, COMIC_RELATED, MOVIE_TV, MUSIC, HISTORY, POLITICAL, CELEBRITY, GAMING, OTHER
+  collectibleType       String   @default("SPORTS_CARD") @map("collectible_type") // SPORTS_CARD, TCG_CARD, NON_SPORTS_CARD, COMIC_BOOK, MEMORABILIA, TICKET, FIGURE, COIN, VINYL, VIDEO_GAME, SEALED_PRODUCT, OTHER
   franchise             String?
   characterName         String?  @map("character_name")
   actorName             String?  @map("actor_name")

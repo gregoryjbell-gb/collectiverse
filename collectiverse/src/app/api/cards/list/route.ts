@@ -34,8 +34,10 @@ export async function GET(req: NextRequest) {
   }
 
   const cardCategory = url.searchParams.get('cardCategory');
+  const collectibleType = url.searchParams.get('collectibleType');
   const franchise = url.searchParams.get('franchise');
   if (cardCategory) where.cardCategory = cardCategory;
+  if (collectibleType) where.collectibleType = collectibleType;
   if (franchise) where.franchise = { contains: franchise, mode: 'insensitive' };
   if (sport) where.set = { ...(where.set || {}), sport: { name: { equals: sport, mode: 'insensitive' } } };
   if (year) where.year = parseInt(year);
@@ -92,6 +94,7 @@ export async function GET(req: NextRequest) {
       frontImageUrl: c.frontImageUrl,
       thumbImageUrl: c.frontImageUrl ? c.frontImageUrl.replace('-display.', '-thumb.') : null,
       cardCategory: c.cardCategory,
+      collectibleType: (c as any).collectibleType || 'SPORTS_CARD',
       franchise: c.franchise,
       characterName: c.characterName,
       actorName: c.actorName,

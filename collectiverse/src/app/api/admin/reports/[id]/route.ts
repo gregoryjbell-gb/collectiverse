@@ -15,10 +15,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     updateData.resolvedAt = new Date();
   }
 
-  const report = await prisma.report.update({ where: { id: params.id }, data: updateData });
+  const report = await (prisma as any).report.update({ where: { id: params.id }, data: updateData });
 
   // Audit log
-  await prisma.auditLog.create({
+  await (prisma as any).auditLog.create({
     data: { action: 'RESOLVE', entityType: 'REPORT', entityId: params.id, adminId: session.sub, notes: resolution },
   });
 

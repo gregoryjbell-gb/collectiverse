@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   if (!session || session.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const status = req.nextUrl.searchParams.get('status') || 'OPEN';
-  const reports = await prisma.report.findMany({
+  const reports = await (prisma as any).report.findMany({
     where: status === 'all' ? {} : { status },
     orderBy: { createdAt: 'desc' },
     take: 100,
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   const validTypes = ['INCORRECT_INFO', 'COPYRIGHT', 'OFFENSIVE', 'FAKE_SCAM', 'DUPLICATE'];
   if (!validTypes.includes(type)) return NextResponse.json({ error: 'Invalid report type' }, { status: 400 });
 
-  const report = await prisma.report.create({
+  const report = await (prisma as any).report.create({
     data: { type, targetType, targetId, reason, reportedById: session.sub },
   });
 

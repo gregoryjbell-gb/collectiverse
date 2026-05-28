@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   if (entityType) where.entityType = entityType;
   if (entityId) where.entityId = entityId;
 
-  const logs = await prisma.auditLog.findMany({
+  const logs = await (prisma as any).auditLog.findMany({
     where,
     orderBy: { createdAt: 'desc' },
     take: 100,

@@ -301,6 +301,9 @@ model InventoryItem {
   frontScanUrl    String?   @map("front_scan_url")
   backScanUrl     String?   @map("back_scan_url")
   storagePath     String?   @map("storage_path")
+  publicId        String?   @unique @map("public_id")
+  passportEnabled Boolean   @default(false) @map("passport_enabled")
+  passportVisibility String @default("PRIVATE") @map("passport_visibility") // PRIVATE, PUBLIC_BASIC, PUBLIC_FOR_SALE, TRANSFER_VERIFICATION
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
@@ -383,6 +386,9 @@ model InventoryGroup {
   backImageUrl    String?   @map("back_image_url")
   privateImageUrl String?   @map("private_image_url")
   storagePath     String?   @map("storage_path")
+  publicId        String?   @unique @map("public_id")
+  passportEnabled Boolean   @default(false) @map("passport_enabled")
+  passportVisibility String @default("PRIVATE") @map("passport_visibility") // PRIVATE, PUBLIC_BASIC, PUBLIC_FOR_SALE, TRANSFER_VERIFICATION
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 

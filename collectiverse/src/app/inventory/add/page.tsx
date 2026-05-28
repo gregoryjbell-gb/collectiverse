@@ -64,6 +64,37 @@ function InventoryAddForm() {
   const backRef = useRef<HTMLInputElement>(null);
   const privateRef = useRef<HTMLInputElement>(null);
 
+  const [showCreateCard, setShowCreateCard] = useState(false);
+  const [creatingCard, setCreatingCard] = useState(false);
+  const [newCardForm, setNewCardForm] = useState({
+    playerName: '', sportName: '', year: '', setName: '', manufacturer: '', cardNumber: '',
+    teamName: '', parallel: '', rookie: false, autograph: false, relic: false,
+    serialNumber: '', printRun: '', frontImageUrl: '', backImageUrl: '', whyItMatters: '',
+  });
+
+  const handleCreateCard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreatingCard(true);
+    setError('');
+    try {
+      const res = await fetch('/api/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCardForm),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      const data = await res.json();
+      setSelectedCard(data.card);
+      setShowCreateCard(false);
+      setResults([]);
+      setSearchQuery('');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setCreatingCard(false);
+    }
+  };
+
   // Auth check
   useEffect(() => {
     fetch('/api/me').then(r => { if (r.status === 401) router.push('/login'); });
@@ -195,7 +226,50 @@ function InventoryAddForm() {
                 )}
 
                 {!searching && searchQuery && results.length === 0 && (
-                  <p className="text-silver text-sm mt-2">No cards found. Try a different search or check the public card database.</p>
+                  <div className="mt-3">
+                    <p className="text-silver text-sm mb-2">No cards found matching your search.</p>
+                    <button type="button" onClick={() => { setShowCreateCard(true); setNewCardForm({...newCardForm, playerName: searchQuery}); }} className="btn-primary text-sm">
+                      + Create New Card
+                    </button>
+                  </div>
+                )}
+
+                {showCreateCard && (
+                  <div className="mt-4 card-surface p-5 border border-amber-500/30 space-y-3">
+                    <h3 className="font-semibold text-amber-400 text-sm">Create New Public Card</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <input className="input-field text-sm" placeholder="Player Name *" value={newCardForm.playerName} onChange={e => setNewCardForm({...newCardForm, playerName: e.target.value})} required />
+                      <input className="input-field text-sm" placeholder="Sport * (e.g. NFL)" value={newCardForm.sportName} onChange={e => setNewCardForm({...newCardForm, sportName: e.target.value})} required />
+                      <input type="number" className="input-field text-sm" placeholder="Year *" value={newCardForm.year} onChange={e => setNewCardForm({...newCardForm, year: e.target.value})} required />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <input className="input-field text-sm" placeholder="Set Name *" value={newCardForm.setName} onChange={e => setNewCardForm({...newCardForm, setName: e.target.value})} required />
+                      <input className="input-field text-sm" placeholder="Manufacturer" value={newCardForm.manufacturer} onChange={e => setNewCardForm({...newCardForm, manufacturer: e.target.value})} />
+                      <input className="input-field text-sm" placeholder="Card # *" value={newCardForm.cardNumber} onChange={e => setNewCardForm({...newCardForm, cardNumber: e.target.value})} required />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <input className="input-field text-sm" placeholder="Team (optional)" value={newCardForm.teamName} onChange={e => setNewCardForm({...newCardForm, teamName: e.target.value})} />
+                      <input className="input-field text-sm" placeholder="Parallel (optional)" value={newCardForm.parallel} onChange={e => setNewCardForm({...newCardForm, parallel: e.target.value})} />
+                      <input className="input-field text-sm" placeholder="Serial # (optional)" value={newCardForm.serialNumber} onChange={e => setNewCardForm({...newCardForm, serialNumber: e.target.value})} />
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                      <label className="flex items-center gap-1.5 text-sm text-silver cursor-pointer">
+                        <input type="checkbox" checked={newCardForm.rookie} onChange={e => setNewCardForm({...newCardForm, rookie: e.target.checked})} /> Rookie
+                      </label>
+                      <label className="flex items-center gap-1.5 text-sm text-silver cursor-pointer">
+                        <input type="checkbox" checked={newCardForm.autograph} onChange={e => setNewCardForm({...newCardForm, autograph: e.target.checked})} /> Autograph
+                      </label>
+                      <label className="flex items-center gap-1.5 text-sm text-silver cursor-pointer">
+                        <input type="checkbox" checked={newCardForm.relic} onChange={e => setNewCardForm({...newCardForm, relic: e.target.checked})} /> Relic
+                      </label>
+                    </div>
+                    {error && <p className="text-red-400 text-xs">{error}</p>}
+                    <div className="flex gap-2">
+                      <button type="button" onClick={handleCreateCard} disabled={creatingCard} className="btn-primary text-sm">{creatingCard ? 'Creating...' : 'Create Card'}</button>
+                      <button type="button" onClick={() => setShowCreateCard(false)} className="btn-secondary text-sm">Cancel</button>
+                    </div>
+                    <p className="text-xs text-silver">This creates a public card record. Existing players, sports, teams, and sets will be reused if they match.</p>
+                  </div>
                 )}
 
                 {!searchQuery && !sportFilter && !yearFilter && (

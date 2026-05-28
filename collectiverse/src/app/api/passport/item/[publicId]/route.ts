@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(_req: NextRequest, { params }: { params: { publicId: string } }) {
-  const item = await prisma.inventoryItem.findFirst({
+  const item = await (prisma as any).inventoryItem.findFirst({
     where: { publicId: params.publicId, passportEnabled: true },
     include: {
       card: {
@@ -17,21 +17,20 @@ export async function GET(_req: NextRequest, { params }: { params: { publicId: s
 
   if (!item) return NextResponse.json({ error: 'Passport not found' }, { status: 404 });
 
-  // Build safe public response based on visibility
   const passport: any = {
     publicId: item.publicId,
     visibility: item.passportVisibility,
     card: {
-      playerName: item.card.person?.displayName || null,
-      setName: item.card.set?.name || null,
-      year: item.card.year || item.card.set?.year,
-      manufacturer: item.card.set?.manufacturer || null,
-      cardNumber: item.card.cardNumber,
-      teamName: item.card.team?.name || null,
-      rookie: item.card.rookie,
-      autograph: item.card.autograph,
-      parallel: item.card.parallel,
-      frontImageUrl: item.card.frontImageUrl,
+      playerName: item.card?.person?.displayName || null,
+      setName: item.card?.set?.name || null,
+      year: item.card?.year || item.card?.set?.year,
+      manufacturer: item.card?.set?.manufacturer || null,
+      cardNumber: item.card?.cardNumber,
+      teamName: item.card?.team?.name || null,
+      rookie: item.card?.rookie,
+      autograph: item.card?.autograph,
+      parallel: item.card?.parallel,
+      frontImageUrl: item.card?.frontImageUrl,
     },
     condition: item.condition,
     gradeCompany: item.gradeCompany,
@@ -45,6 +44,5 @@ export async function GET(_req: NextRequest, { params }: { params: { publicId: s
     passport.askingPrice = item.askingPrice;
   }
 
-  // Never expose: purchasePrice, storageLocation, notes, private scans, owner name
   return NextResponse.json({ passport });
 }

@@ -84,14 +84,27 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [editSetForm, setEditSetForm] = useState<any>({});
   const [showSportForm, setShowSportForm] = useState(false);
   const [sportForm, setSportForm] = useState({ name: '', league: '' });
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [cardForm, setCardForm] = useState({ personId: '', setId: '', teamId: '', year: '', cardNumber: '', parallel: '', rookie: false, autograph: false, relic: false, serialNumber: '', printRun: '', estimatedValue: '' });
+  const [showPlayerForm, setShowPlayerForm] = useState(false);
+  const [playerForm, setPlayerForm] = useState({ displayName: '', biography: '', hallOfFame: false });
+  const [teams, setTeams] = useState<any[]>([]);
 
   useEffect(() => {
     fetch('/api/admin/analytics').then((r) => r.json()).then(setAnalytics);
   }, []);
 
   useEffect(() => {
-    if (tab === 'cards') fetch('/api/admin/cards').then((r) => r.json()).then((d) => setCards(d.cards || []));
-    if (tab === 'players') fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
+    if (tab === 'cards') {
+      fetch('/api/admin/cards').then((r) => r.json()).then((d) => setCards(d.cards || []));
+      fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
+      fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
+      fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
+    }
+    if (tab === 'players') {
+      fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
+      fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
+    }
     if (tab === 'sets') {
       fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
       fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
@@ -150,6 +163,36 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     if (!confirm('Delete this sport? Sets and teams linked to it may be affected.')) return;
     await fetch(`/api/admin/sports/${id}`, { method: 'DELETE' });
     setSports(sports.filter(s => s.id !== id));
+  };
+  const createCard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cardForm.personId) { alert('Player is required'); return; }
+    if (!cardForm.setId) { alert('Set is required'); return; }
+    const body: any = { ...cardForm };
+    if (body.year) body.year = parseInt(body.year);
+    if (body.printRun) body.printRun = parseInt(body.printRun);
+    if (body.estimatedValue) body.estimatedValue = parseFloat(body.estimatedValue);
+    else delete body.estimatedValue;
+    if (!body.teamId) delete body.teamId;
+    if (!body.parallel) delete body.parallel;
+    if (!body.serialNumber) delete body.serialNumber;
+    if (!body.printRun) delete body.printRun;
+    const res = await fetch('/api/admin/cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (res.ok) {
+      setShowCardForm(false);
+      setCardForm({ personId: '', setId: '', teamId: '', year: '', cardNumber: '', parallel: '', rookie: false, autograph: false, relic: false, serialNumber: '', printRun: '', estimatedValue: '' });
+      fetch('/api/admin/cards').then((r) => r.json()).then((d) => setCards(d.cards || []));
+    } else { const d = await res.json(); alert(d.error || 'Failed to create card'); }
+  };
+  const createPlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!playerForm.displayName) { alert('Display name is required'); return; }
+    const res = await fetch('/api/admin/players', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(playerForm) });
+    if (res.ok) {
+      setShowPlayerForm(false);
+      setPlayerForm({ displayName: '', biography: '', hallOfFame: false });
+      fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
+    } else { const d = await res.json(); alert(d.error || 'Failed to create player'); }
   };
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,10 +258,51 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {/* Cards */}
         {tab === 'cards' && (
           <div>
-            <div className="flex gap-3 mb-4 items-center">
+            <div className="flex gap-3 mb-4 items-center flex-wrap">
               <input type="search" className="input-field max-w-sm" placeholder="Search by player, set, team, year, card #..." value={cardSearch} onChange={e => setCardSearch(e.target.value)} />
               <span className="text-silver text-sm">{filteredCards.length} of {cards.length}</span>
+              <button onClick={() => setShowCardForm(!showCardForm)} className="btn-primary text-sm ml-auto">{showCardForm ? 'Cancel' : '+ Add Card'}</button>
             </div>
+            {showCardForm && (
+              <form onSubmit={createCard} className="card-surface p-4 mb-4 space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <select className="input-field text-sm" value={cardForm.personId} onChange={e => setCardForm({...cardForm, personId: e.target.value})} required>
+                    <option value="">Player *</option>
+                    {players.map(p => <option key={p.id} value={p.id}>{p.displayName}</option>)}
+                  </select>
+                  <select className="input-field text-sm" value={cardForm.setId} onChange={e => setCardForm({...cardForm, setId: e.target.value})} required>
+                    <option value="">Set *</option>
+                    {sets.map(s => <option key={s.id} value={s.id}>{s.name} ({s.year})</option>)}
+                  </select>
+                  <select className="input-field text-sm" value={cardForm.teamId} onChange={e => setCardForm({...cardForm, teamId: e.target.value})}>
+                    <option value="">Team (optional)</option>
+                    {players.find(p => p.id === cardForm.personId)?.personTeams?.map((pt: any) => (
+                      <option key={pt.team?.id || pt.id} value={pt.team?.id || ''}>{pt.team?.name || 'Unknown'}</option>
+                    )) || []}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <input className="input-field text-sm" placeholder="Card #" value={cardForm.cardNumber} onChange={e => setCardForm({...cardForm, cardNumber: e.target.value})} />
+                  <input type="number" className="input-field text-sm" placeholder="Year" value={cardForm.year} onChange={e => setCardForm({...cardForm, year: e.target.value})} />
+                  <input className="input-field text-sm" placeholder="Parallel" value={cardForm.parallel} onChange={e => setCardForm({...cardForm, parallel: e.target.value})} />
+                  <input type="number" step="0.01" className="input-field text-sm" placeholder="Est. Value ($)" value={cardForm.estimatedValue} onChange={e => setCardForm({...cardForm, estimatedValue: e.target.value})} />
+                </div>
+                <div className="flex flex-wrap gap-4 items-center">
+                  <label className="flex items-center gap-1.5 text-sm text-silver cursor-pointer">
+                    <input type="checkbox" checked={cardForm.rookie} onChange={e => setCardForm({...cardForm, rookie: e.target.checked})} /> Rookie
+                  </label>
+                  <label className="flex items-center gap-1.5 text-sm text-silver cursor-pointer">
+                    <input type="checkbox" checked={cardForm.autograph} onChange={e => setCardForm({...cardForm, autograph: e.target.checked})} /> Auto
+                  </label>
+                  <label className="flex items-center gap-1.5 text-sm text-silver cursor-pointer">
+                    <input type="checkbox" checked={cardForm.relic} onChange={e => setCardForm({...cardForm, relic: e.target.checked})} /> Relic
+                  </label>
+                  <input className="input-field text-sm w-32" placeholder="Serial #" value={cardForm.serialNumber} onChange={e => setCardForm({...cardForm, serialNumber: e.target.value})} />
+                  <input type="number" className="input-field text-sm w-28" placeholder="Print Run" value={cardForm.printRun} onChange={e => setCardForm({...cardForm, printRun: e.target.value})} />
+                  <button type="submit" className="btn-primary text-sm">Create Card</button>
+                </div>
+              </form>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-silver/20 text-left text-silver text-xs">
@@ -252,10 +336,25 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {/* Players */}
         {tab === 'players' && (
           <div>
-            <div className="flex gap-3 mb-4 items-center">
+            <div className="flex gap-3 mb-4 items-center flex-wrap">
               <input type="search" className="input-field max-w-sm" placeholder="Search players..." value={playerSearch} onChange={e => setPlayerSearch(e.target.value)} />
               <span className="text-silver text-sm">{filteredPlayers.length} of {players.length}</span>
+              <button onClick={() => setShowPlayerForm(!showPlayerForm)} className="btn-primary text-sm ml-auto">{showPlayerForm ? 'Cancel' : '+ Add Player'}</button>
             </div>
+            {showPlayerForm && (
+              <form onSubmit={createPlayer} className="card-surface p-4 mb-4 space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <input className="input-field text-sm" placeholder="Display Name *" value={playerForm.displayName} onChange={e => setPlayerForm({...playerForm, displayName: e.target.value})} required />
+                  <input className="input-field text-sm" placeholder="Biography" value={playerForm.biography} onChange={e => setPlayerForm({...playerForm, biography: e.target.value})} />
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-1.5 text-sm text-silver cursor-pointer">
+                      <input type="checkbox" checked={playerForm.hallOfFame} onChange={e => setPlayerForm({...playerForm, hallOfFame: e.target.checked})} /> Hall of Fame
+                    </label>
+                    <button type="submit" className="btn-primary text-sm">Create Player</button>
+                  </div>
+                </div>
+              </form>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-silver/20 text-left text-silver text-xs">

@@ -591,3 +591,25 @@ model DisputeMessage {
 
   @@map("dispute_messages")
 }
+
+model Shipment {
+  id              String    @id @default(cuid())
+  listingId       String?   @map("listing_id")
+  offerId         String?   @map("offer_id")
+  transferId      String?   @map("transfer_id")
+  sellerUserId    String    @map("seller_user_id")
+  buyerUserId     String    @map("buyer_user_id")
+  carrier         String    // USPS, UPS, FEDEX, DHL, OTHER
+  trackingNumber  String?   @map("tracking_number")
+  trackingUrl     String?   @map("tracking_url")
+  shippingStatus  String    @default("NOT_SHIPPED") @map("shipping_status") // NOT_SHIPPED, LABEL_CREATED, SHIPPED, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, DELAYED, LOST, RETURNED, CANCELLED
+  shippedAt       DateTime? @map("shipped_at")
+  deliveredAt     DateTime? @map("delivered_at")
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([sellerUserId])
+  @@index([buyerUserId])
+  @@map("shipments")
+}

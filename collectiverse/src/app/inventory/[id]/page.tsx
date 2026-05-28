@@ -83,9 +83,9 @@ export default function InventoryDetailPage() {
               <div className="card-surface p-6 mt-4">
                 <h3 className="font-semibold mb-3">Private Scans</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {item.frontScanUrl && <img src={item.frontScanUrl} alt="Front scan" className="rounded-lg" />}
-                  {item.backScanUrl && <img src={item.backScanUrl} alt="Back scan" className="rounded-lg" />}
-                  {item.privateImageUrl && <img src={item.privateImageUrl} alt="Private image" className="rounded-lg col-span-2" />}
+                  {item.frontScanUrl && <img src={`/api/inventory/${id}/media/front`} alt="Front scan" className="rounded-lg" />}
+                  {item.backScanUrl && <img src={`/api/inventory/${id}/media/back`} alt="Back scan" className="rounded-lg" />}
+                  {item.privateImageUrl && <img src={`/api/inventory/${id}/media/private`} alt="Private image" className="rounded-lg col-span-2" />}
                 </div>
               </div>
             )}

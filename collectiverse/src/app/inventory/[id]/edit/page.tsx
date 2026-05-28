@@ -201,6 +201,7 @@ export default function EditInventoryPage() {
               label="Front Scan"
               fieldName="frontScan"
               currentUrl={form.frontScanUrl}
+              previewUrl={form.frontScanUrl ? `/api/inventory/${id}/media/front` : ''}
               onUrlChange={(url) => setForm({ ...form, frontScanUrl: url })}
               onUpload={handleUpload}
               uploading={uploading === 'frontScan'}
@@ -210,6 +211,7 @@ export default function EditInventoryPage() {
               label="Back Scan"
               fieldName="backScan"
               currentUrl={form.backScanUrl}
+              previewUrl={form.backScanUrl ? `/api/inventory/${id}/media/back` : ''}
               onUrlChange={(url) => setForm({ ...form, backScanUrl: url })}
               onUpload={handleUpload}
               uploading={uploading === 'backScan'}
@@ -219,6 +221,7 @@ export default function EditInventoryPage() {
               label="Private Image"
               fieldName="privateImage"
               currentUrl={form.privateImageUrl}
+              previewUrl={form.privateImageUrl ? `/api/inventory/${id}/media/private` : ''}
               onUrlChange={(url) => setForm({ ...form, privateImageUrl: url })}
               onUpload={handleUpload}
               uploading={uploading === 'privateImage'}
@@ -237,10 +240,11 @@ export default function EditInventoryPage() {
   );
 }
 
-function ImageUploadField({ label, fieldName, currentUrl, onUrlChange, onUpload, uploading }: {
+function ImageUploadField({ label, fieldName, currentUrl, previewUrl, onUrlChange, onUpload, uploading }: {
   label: string;
   fieldName: string;
   currentUrl: string;
+  previewUrl?: string;
   onUrlChange: (url: string) => void;
   onUpload: (fieldName: string, file: File) => void;
   uploading: boolean;
@@ -257,10 +261,10 @@ function ImageUploadField({ label, fieldName, currentUrl, onUrlChange, onUpload,
     <div className="mb-4">
       <label className="text-xs text-silver block mb-1.5">{label}</label>
 
-      {/* Preview */}
-      {currentUrl && (
+      {/* Preview — use authenticated media URL */}
+      {(previewUrl || currentUrl) && (
         <div className="mb-2">
-          <img src={currentUrl} alt={label} className="w-24 h-24 object-cover rounded-lg border border-silver/20" />
+          <img src={previewUrl || currentUrl} alt={label} className="w-24 h-24 object-cover rounded-lg border border-silver/20" />
         </div>
       )}
 

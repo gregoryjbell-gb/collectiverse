@@ -66,7 +66,7 @@ export default function AdminPage() {
 }
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<'overview' | 'cards' | 'players' | 'sets' | 'users'>('overview');
+  const [tab, setTab] = useState<'overview' | 'cards' | 'players' | 'sets' | 'sports' | 'users'>('overview');
   const [analytics, setAnalytics] = useState<any>(null);
   const [cards, setCards] = useState<any[]>([]);
   const [players, setPlayers] = useState<any[]>([]);
@@ -82,6 +82,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [sports, setSports] = useState<any[]>([]);
   const [editingSet, setEditingSet] = useState<string | null>(null);
   const [editSetForm, setEditSetForm] = useState<any>({});
+  const [showSportForm, setShowSportForm] = useState(false);
+  const [sportForm, setSportForm] = useState({ name: '', league: '' });
 
   useEffect(() => {
     fetch('/api/admin/analytics').then((r) => r.json()).then(setAnalytics);
@@ -92,6 +94,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     if (tab === 'players') fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
     if (tab === 'sets') {
       fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
+      fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
+    }
+    if (tab === 'sports') {
       fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
     }
     if (tab === 'users') fetch('/api/admin/users').then((r) => r.json()).then((d) => setUsers(d.users || []));
@@ -132,6 +137,20 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setEditingSet(null);
     fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
   };
+  const createSport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch('/api/admin/sports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sportForm) });
+    if (res.ok) {
+      setShowSportForm(false);
+      setSportForm({ name: '', league: '' });
+      fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || []));
+    } else { const d = await res.json(); alert(d.error); }
+  };
+  const deleteSport = async (id: string) => {
+    if (!confirm('Delete this sport? Sets and teams linked to it may be affected.')) return;
+    await fetch(`/api/admin/sports/${id}`, { method: 'DELETE' });
+    setSports(sports.filter(s => s.id !== id));
+  };
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch('/api/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userForm) });
@@ -164,7 +183,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
 
         <nav className="flex gap-2 mb-8 flex-wrap">
-          {(['overview', 'cards', 'players', 'sets', 'users'] as const).map((t) => (
+          {(['overview', 'cards', 'players', 'sets', 'sports', 'users'] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg capitalize transition-colors ${tab === t ? 'bg-electric text-white' : 'bg-gunmetal/50 text-silver hover:text-white'}`}>
               {t}
             </button>
@@ -331,6 +350,41 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </td>
                       </tr>
                     )
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Sports */}
+        {tab === 'sports' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-silver text-sm">{sports.length} sports</span>
+              <button onClick={() => setShowSportForm(!showSportForm)} className="btn-primary text-sm">{showSportForm ? 'Cancel' : '+ Add Sport'}</button>
+            </div>
+            {showSportForm && (
+              <form onSubmit={createSport} className="card-surface p-4 mb-4 grid grid-cols-3 gap-3">
+                <input className="input-field text-sm" placeholder="Name * (e.g. NFL, NBA)" value={sportForm.name} onChange={e => setSportForm({...sportForm, name: e.target.value})} required />
+                <input className="input-field text-sm" placeholder="League (e.g. National Football League)" value={sportForm.league} onChange={e => setSportForm({...sportForm, league: e.target.value})} />
+                <button type="submit" className="btn-primary text-sm">Create Sport</button>
+              </form>
+            )}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-silver/20 text-left text-silver text-xs">
+                  <th className="py-2 px-2">Name</th><th className="py-2 px-2">League</th><th className="py-2 px-2">Actions</th>
+                </tr></thead>
+                <tbody>
+                  {sports.map(sp => (
+                    <tr key={sp.id} className="border-b border-silver/10 hover:bg-silver/5">
+                      <td className="py-2 px-2 font-medium">{sp.name}</td>
+                      <td className="py-2 px-2 text-silver">{sp.league || '—'}</td>
+                      <td className="py-2 px-2">
+                        <button onClick={() => deleteSport(sp.id)} className="text-red-400 text-xs hover:underline">Del</button>
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>

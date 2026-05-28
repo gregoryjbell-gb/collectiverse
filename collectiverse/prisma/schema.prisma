@@ -423,3 +423,22 @@ model Listing {
 
   @@map("listings")
 }
+
+model OwnershipTransfer {
+  id               String    @id @default(cuid())
+  fromUserId       String    @map("from_user_id")
+  toUserId         String    @map("to_user_id")
+  inventoryItemId  String?   @map("inventory_item_id")
+  inventoryGroupId String?   @map("inventory_group_id")
+  listingId        String?   @map("listing_id")
+  transferType     String    @map("transfer_type") // SALE, TRADE, GIFT, PRIVATE_TRANSFER
+  status           String    @default("PENDING") // PENDING, ACCEPTED, DECLINED, CANCELLED
+  transferPrice    Float?    @map("transfer_price")
+  notes            String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  acceptedAt       DateTime? @map("accepted_at")
+  declinedAt       DateTime? @map("declined_at")
+  cancelledAt      DateTime? @map("cancelled_at")
+
+  @@map("ownership_transfers")
+}

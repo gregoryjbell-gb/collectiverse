@@ -24,9 +24,15 @@ export default function DashboardPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">My Dashboard</h1>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2">
             <Link href="/inventory/add" className="btn-primary text-sm">+ Add Card</Link>
-            <Link href="/inventory" className="btn-secondary text-sm">View Inventory</Link>
+            <Link href="/inventory" className="btn-secondary text-sm">Inventory</Link>
+            <Link href="/inventory/groups" className="btn-secondary text-sm">Groups</Link>
+            <Link href="/listings" className="btn-secondary text-sm">Listings</Link>
+            <Link href="/wishlist" className="btn-secondary text-sm">Wishlist</Link>
+            <Link href="/analytics" className="btn-secondary text-sm">Analytics</Link>
+            <Link href="/offers" className="btn-secondary text-sm">Offers</Link>
+            <Link href="/qr-labels" className="btn-secondary text-sm">QR Labels</Link>
           </div>
         </div>
 

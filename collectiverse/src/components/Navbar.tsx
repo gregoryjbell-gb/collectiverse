@@ -9,6 +9,8 @@ const navLinks = [
   { href: '/cards', label: 'Cards' },
   { href: '/players', label: 'Players' },
   { href: '/sets', label: 'Sets' },
+  { href: '/marketplace', label: 'Marketplace' },
+  { href: '/search', label: 'Search' },
 ];
 
 export default function Navbar() {
@@ -69,32 +71,18 @@ export default function Navbar() {
                 <span className="text-sm text-white font-medium">{user.displayName || user.username}</span>
                 <span className="badge bg-electric/20 text-electric text-xs">{user.role}</span>
               </div>
-              <Link
-                href="/dashboard"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  pathname.startsWith('/dashboard') || pathname.startsWith('/inventory')
-                    ? 'bg-electric/15 text-electric'
-                    : 'text-silver hover:text-white hover:bg-silver/5'
-                }`}
-              >
-                My Collection
+              <Link href="/dashboard" className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith('/dashboard') || pathname.startsWith('/inventory') || pathname.startsWith('/analytics') ? 'bg-electric/15 text-electric' : 'text-silver hover:text-white hover:bg-silver/5'}`}>
+                Collection
+              </Link>
+              <Link href="/notifications" className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith('/notifications') ? 'bg-electric/15 text-electric' : 'text-silver hover:text-white hover:bg-silver/5'}`}>
+                🔔
               </Link>
               {(user.role === 'ADMIN') && (
-                <Link
-                  href="/admin"
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    pathname.startsWith('/admin')
-                      ? 'bg-electric/15 text-electric'
-                      : 'text-silver hover:text-white hover:bg-silver/5'
-                  }`}
-                >
+                <Link href="/admin" className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith('/admin') ? 'bg-electric/15 text-electric' : 'text-silver hover:text-white hover:bg-silver/5'}`}>
                   Admin
                 </Link>
               )}
-              <button
-                onClick={handleLogout}
-                className="px-3 py-2 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5 transition-colors"
-              >
+              <button onClick={handleLogout} className="px-3 py-2 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5 transition-colors">
                 Logout
               </button>
             </>
@@ -161,16 +149,21 @@ export default function Navbar() {
                   <span className="text-sm text-white font-medium">{user.displayName || user.username}</span>
                   <span className="badge bg-electric/20 text-electric text-xs">{user.role}</span>
                 </div>
-                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">
-                  My Collection
-                </Link>
-                <Link href="/inventory" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">
-                  Inventory
-                </Link>
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Dashboard</Link>
+                <Link href="/inventory" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Inventory</Link>
+                <Link href="/inventory/groups" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Groups / Sets / Lots</Link>
+                <Link href="/listings" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">My Listings</Link>
+                <Link href="/wishlist" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Wishlist</Link>
+                <Link href="/offers" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Offers</Link>
+                <Link href="/analytics" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Analytics</Link>
+                <Link href="/notifications" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Notifications</Link>
+                <Link href="/shipments" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Shipments</Link>
+                <Link href="/payments" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Payments</Link>
+                <Link href="/disputes" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Disputes</Link>
+                <Link href="/qr-labels" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">QR Labels</Link>
+                <Link href="/account" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Account</Link>
                 {user.role === 'ADMIN' && (
-                  <Link href="/admin" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">
-                    Admin
-                  </Link>
+                  <Link href="/admin" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Admin</Link>
                 )}
                 <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">
                   Logout

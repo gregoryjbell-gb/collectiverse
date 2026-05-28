@@ -24,16 +24,23 @@ export default function DashboardPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">My Dashboard</h1>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/inventory/add" className="btn-primary text-sm">+ Add Card</Link>
-            <Link href="/inventory" className="btn-secondary text-sm">Inventory</Link>
-            <Link href="/inventory/groups" className="btn-secondary text-sm">Groups</Link>
-            <Link href="/listings" className="btn-secondary text-sm">Listings</Link>
-            <Link href="/wishlist" className="btn-secondary text-sm">Wishlist</Link>
-            <Link href="/analytics" className="btn-secondary text-sm">Analytics</Link>
-            <Link href="/offers" className="btn-secondary text-sm">Offers</Link>
-            <Link href="/qr-labels" className="btn-secondary text-sm">QR Labels</Link>
-          </div>
+          <Link href="/inventory/add" className="btn-primary text-sm">+ Add Collectible</Link>
+        </div>
+
+        {/* Feature Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+          <FeatureCard href="/inventory" label="Inventory" desc="My owned cards" />
+          <FeatureCard href="/inventory/groups" label="Groups / Lots" desc="Sets, boxes, sealed" />
+          <FeatureCard href="/wishlist" label="Wishlist" desc="Target acquisitions" />
+          <FeatureCard href="/listings" label="Listings" desc="For sale items" />
+          <FeatureCard href="/offers" label="Offers" desc="Sent & received" />
+          <FeatureCard href="/notifications" label="Notifications" desc="Activity feed" />
+          <FeatureCard href="/analytics" label="Analytics" desc="Portfolio insights" />
+          <FeatureCard href="/shipments" label="Shipments" desc="Tracking" />
+          <FeatureCard href="/payments" label="Payments" desc="Transaction records" />
+          <FeatureCard href="/disputes" label="Disputes" desc="Issue resolution" />
+          <FeatureCard href="/qr-labels" label="QR Labels" desc="Print labels" />
+          <FeatureCard href="/account" label="Account" desc="Profile settings" />
         </div>
 
         {/* Primary Stats */}
@@ -158,5 +165,14 @@ function Breakdown({ title, data }: { title: string; data: Record<string, number
         ))}
       </div>
     </div>
+  );
+}
+
+function FeatureCard({ href, label, desc }: { href: string; label: string; desc: string }) {
+  return (
+    <Link href={href} className="card-surface p-4 hover:border-electric/30 transition-colors group">
+      <p className="font-medium text-sm group-hover:text-electric transition-colors">{label}</p>
+      <p className="text-xs text-silver">{desc}</p>
+    </Link>
   );
 }

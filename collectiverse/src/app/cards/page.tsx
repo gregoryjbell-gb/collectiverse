@@ -29,6 +29,14 @@ interface CardItem {
   parallel: string | null;
   estimatedValue: number | null;
   frontImageUrl: string | null;
+  cardCategory: string;
+  franchise: string | null;
+  characterName: string | null;
+  actorName: string | null;
+  artistName: string | null;
+  subjectName: string | null;
+  universe: string | null;
+  genre: string | null;
 }
 
 function CardsPage() {
@@ -49,6 +57,7 @@ function CardsPage() {
   const rookie = searchParams.get('rookie') || '';
   const autograph = searchParams.get('autograph') || '';
   const relic = searchParams.get('relic') || '';
+  const cardCategory = searchParams.get('cardCategory') || '';
   const sort = searchParams.get('sort') || 'newest';
   const page = parseInt(searchParams.get('page') || '1');
   const pageSize = parseInt(searchParams.get('pageSize') || '25');
@@ -75,6 +84,7 @@ function CardsPage() {
     if (rookie) params.set('rookie', rookie);
     if (autograph) params.set('autograph', autograph);
     if (relic) params.set('relic', relic);
+    if (cardCategory) params.set('cardCategory', cardCategory);
     params.set('sort', sort);
     params.set('page', String(page));
     params.set('pageSize', String(pageSize));
@@ -138,6 +148,18 @@ function CardsPage() {
             <button type="submit" className="btn-primary text-sm">Search</button>
           </form>
           <div className="flex flex-wrap gap-2">
+            <select className="input-field w-auto text-sm" value={cardCategory} onChange={e => updateParams({ cardCategory: e.target.value })}>
+              <option value="">All Categories</option>
+              <option value="SPORTS">Sports</option>
+              <option value="TCG">TCG</option>
+              <option value="ENTERTAINMENT">Entertainment</option>
+              <option value="MOVIE_TV">Movie/TV</option>
+              <option value="MUSIC">Music</option>
+              <option value="COMIC_RELATED">Comics</option>
+              <option value="HISTORY">History</option>
+              <option value="GAMING">Gaming</option>
+              <option value="OTHER">Other</option>
+            </select>
             <select className="input-field w-auto text-sm" value={sport} onChange={e => updateParams({ sport: e.target.value })}>
               <option value="">All Sports</option>
               <option value="NFL">NFL</option>
@@ -163,7 +185,7 @@ function CardsPage() {
               <option value="value_high">Value High-Low</option>
               <option value="value_low">Value Low-High</option>
             </select>
-            {(q || sport || year || manufacturer || rookie || autograph || relic) && (
+            {(q || sport || year || manufacturer || rookie || autograph || relic || cardCategory) && (
               <button onClick={() => { setSearchInput(''); router.push('/cards'); }} className="text-xs text-red-400 hover:underline">Clear All</button>
             )}
           </div>
@@ -193,7 +215,7 @@ function CardsPage() {
               <thead>
                 <tr className="border-b border-silver/20 text-left text-silver text-xs">
                   <th className="py-2 px-2">Year</th>
-                  <th className="py-2 px-2">Player</th>
+                  <th className="py-2 px-2">Subject</th>
                   <th className="py-2 px-2">#</th>
                   <th className="py-2 px-2">Set</th>
                   <th className="py-2 px-2">Mfr</th>
@@ -207,7 +229,7 @@ function CardsPage() {
                 {items.map(card => (
                   <tr key={card.id} className="border-b border-silver/10 hover:bg-silver/5 transition-colors">
                     <td className="py-2 px-2 text-silver">{card.year || '—'}</td>
-                    <td className="py-2 px-2 font-medium">{card.playerName}</td>
+                    <td className="py-2 px-2 font-medium">{card.playerName || card.characterName || card.actorName || card.artistName || card.subjectName || '—'}</td>
                     <td className="py-2 px-2 text-silver">{card.cardNumber || '—'}</td>
                     <td className="py-2 px-2 text-silver text-xs">{card.setName}</td>
                     <td className="py-2 px-2 text-silver text-xs">{card.manufacturer || '—'}</td>

@@ -73,6 +73,7 @@ function InventoryAddForm() {
     playerName: '', sportName: '', year: '', setName: '', manufacturer: '', cardNumber: '',
     teamName: '', parallel: '', rookie: false, autograph: false, relic: false,
     serialNumber: '', printRun: '', frontImageUrl: '', backImageUrl: '', whyItMatters: '',
+    cardCategory: 'SPORTS', franchise: '', characterName: '', actorName: '', artistName: '', subjectName: '', universe: '', genre: '',
   });
 
   const handleCreateCard = async (e: React.FormEvent) => {
@@ -304,21 +305,67 @@ function InventoryAddForm() {
                 {showCreateCard && (
                   <div className="mt-4 card-surface p-5 border border-amber-500/30 space-y-3">
                     <h3 className="font-semibold text-amber-400 text-sm">Create New Public Card</h3>
+
+                    {/* Category selector */}
+                    <select className="input-field text-sm" value={newCardForm.cardCategory} onChange={e => setNewCardForm({...newCardForm, cardCategory: e.target.value})}>
+                      <option value="SPORTS">Sports</option>
+                      <option value="TCG">TCG / Trading Card Game</option>
+                      <option value="ENTERTAINMENT">Entertainment</option>
+                      <option value="MOVIE_TV">Movie / TV</option>
+                      <option value="MUSIC">Music</option>
+                      <option value="COMIC_RELATED">Comics</option>
+                      <option value="HISTORY">History</option>
+                      <option value="GAMING">Gaming</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+
+                    {/* Common fields */}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      <input className="input-field text-sm" placeholder="Player Name *" value={newCardForm.playerName} onChange={e => setNewCardForm({...newCardForm, playerName: e.target.value})} required />
-                      <input className="input-field text-sm" placeholder="Sport * (e.g. NFL)" value={newCardForm.sportName} onChange={e => setNewCardForm({...newCardForm, sportName: e.target.value})} required />
+                      <input className="input-field text-sm" placeholder={newCardForm.cardCategory === 'SPORTS' ? 'Player Name *' : newCardForm.cardCategory === 'MUSIC' ? 'Artist *' : 'Subject / Character *'} value={newCardForm.playerName} onChange={e => setNewCardForm({...newCardForm, playerName: e.target.value})} required />
                       <input type="number" className="input-field text-sm" placeholder="Year *" value={newCardForm.year} onChange={e => setNewCardForm({...newCardForm, year: e.target.value})} required />
+                      <input className="input-field text-sm" placeholder="Card # *" value={newCardForm.cardNumber} onChange={e => setNewCardForm({...newCardForm, cardNumber: e.target.value})} required />
                     </div>
+
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       <input className="input-field text-sm" placeholder="Set Name *" value={newCardForm.setName} onChange={e => setNewCardForm({...newCardForm, setName: e.target.value})} required />
                       <input className="input-field text-sm" placeholder="Manufacturer" value={newCardForm.manufacturer} onChange={e => setNewCardForm({...newCardForm, manufacturer: e.target.value})} />
-                      <input className="input-field text-sm" placeholder="Card # *" value={newCardForm.cardNumber} onChange={e => setNewCardForm({...newCardForm, cardNumber: e.target.value})} required />
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      <input className="input-field text-sm" placeholder="Team (optional)" value={newCardForm.teamName} onChange={e => setNewCardForm({...newCardForm, teamName: e.target.value})} />
                       <input className="input-field text-sm" placeholder="Parallel (optional)" value={newCardForm.parallel} onChange={e => setNewCardForm({...newCardForm, parallel: e.target.value})} />
-                      <input className="input-field text-sm" placeholder="Serial # (optional)" value={newCardForm.serialNumber} onChange={e => setNewCardForm({...newCardForm, serialNumber: e.target.value})} />
                     </div>
+
+                    {/* Category-specific fields */}
+                    {newCardForm.cardCategory === 'SPORTS' && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <input className="input-field text-sm" placeholder="Sport (e.g. NFL)" value={newCardForm.sportName} onChange={e => setNewCardForm({...newCardForm, sportName: e.target.value})} />
+                        <input className="input-field text-sm" placeholder="Team" value={newCardForm.teamName} onChange={e => setNewCardForm({...newCardForm, teamName: e.target.value})} />
+                      </div>
+                    )}
+
+                    {(newCardForm.cardCategory === 'TCG' || newCardForm.cardCategory === 'GAMING') && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <input className="input-field text-sm" placeholder="Game / Franchise" value={newCardForm.franchise} onChange={e => setNewCardForm({...newCardForm, franchise: e.target.value})} />
+                        <input className="input-field text-sm" placeholder="Character Name" value={newCardForm.characterName} onChange={e => setNewCardForm({...newCardForm, characterName: e.target.value})} />
+                      </div>
+                    )}
+
+                    {(newCardForm.cardCategory === 'MOVIE_TV' || newCardForm.cardCategory === 'ENTERTAINMENT') && (
+                      <div className="grid grid-cols-3 gap-3">
+                        <input className="input-field text-sm" placeholder="Franchise / Universe" value={newCardForm.franchise} onChange={e => setNewCardForm({...newCardForm, franchise: e.target.value})} />
+                        <input className="input-field text-sm" placeholder="Character" value={newCardForm.characterName} onChange={e => setNewCardForm({...newCardForm, characterName: e.target.value})} />
+                        <input className="input-field text-sm" placeholder="Actor" value={newCardForm.actorName} onChange={e => setNewCardForm({...newCardForm, actorName: e.target.value})} />
+                      </div>
+                    )}
+
+                    {newCardForm.cardCategory === 'MUSIC' && (
+                      <input className="input-field text-sm" placeholder="Artist Name" value={newCardForm.artistName} onChange={e => setNewCardForm({...newCardForm, artistName: e.target.value})} />
+                    )}
+
+                    {(newCardForm.cardCategory === 'COMIC_RELATED') && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <input className="input-field text-sm" placeholder="Universe (e.g. Marvel, DC)" value={newCardForm.universe} onChange={e => setNewCardForm({...newCardForm, universe: e.target.value})} />
+                        <input className="input-field text-sm" placeholder="Character" value={newCardForm.characterName} onChange={e => setNewCardForm({...newCardForm, characterName: e.target.value})} />
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap gap-4">
                       <label className="flex items-center gap-1.5 text-sm text-silver cursor-pointer">
                         <input type="checkbox" checked={newCardForm.rookie} onChange={e => setNewCardForm({...newCardForm, rookie: e.target.checked})} /> Rookie
@@ -335,7 +382,7 @@ function InventoryAddForm() {
                       <button type="button" onClick={handleCreateCard} disabled={creatingCard} className="btn-primary text-sm">{creatingCard ? 'Creating...' : 'Create Card'}</button>
                       <button type="button" onClick={() => setShowCreateCard(false)} className="btn-secondary text-sm">Cancel</button>
                     </div>
-                    <p className="text-xs text-silver">This creates a public card record. Existing players, sports, teams, and sets will be reused if they match.</p>
+                    <p className="text-xs text-silver">This creates a public card record. Existing subjects, sports, teams, and sets will be reused if they match.</p>
                   </div>
                 )}
 

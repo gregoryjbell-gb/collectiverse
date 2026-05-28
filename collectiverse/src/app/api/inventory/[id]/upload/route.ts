@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
+import { applyWatermark, generateThumbnail, PRIVATE_WATERMARK, IMAGE_SIZES } from '@/lib/image-watermark';
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -23,11 +24,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const item = await prisma.inventoryItem.findFirst({ where: { id: params.id, userId } });
   if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+  // Get username for watermark
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { displayName: true, username: true } });
+  const watermarkName = user?.displayName || user?.username || 'User';
+
   const formData = await req.formData();
   const updateData: Record<string, string> = {};
   const urls: Record<string, string> = {};
 
-  // Private storage: storage/private/users/{userId}/inventory/{itemId}/
   const privateDir = join(process.cwd(), 'storage', 'private', 'users', userId, 'inventory', params.id);
   await mkdir(privateDir, { recursive: true });
 
@@ -44,15 +48,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     const ext = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp';
-    const filename = `${fieldName}-${randomUUID()}.${ext}`;
+    const uuid = randomUUID();
+    const originalFilename = `original-${fieldName}-${uuid}.${ext}`;
+    const displayFilename = `display-${fieldName}-${uuid}.webp`;
+    const thumbFilename = `thumb-${fieldName}-${uuid}.webp`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(join(privateDir, filename), buffer);
 
-    // Store only the filename in the DB — media route resolves the full path
-    updateData[dbField] = filename;
+    // Store original (never served directly)
+    await writeFile(join(privateDir, originalFilename), buffer);
 
-    // Return the authenticated media URL to the client
+    // Generate watermarked display version
+    const watermarkConfig = PRIVATE_WATERMARK(watermarkName);
+    const displayBuffer = await applyWatermark(buffer, watermarkConfig, IMAGE_SIZES.display.width);
+    await writeFile(join(privateDir, displayFilename), displayBuffer);
+
+    // Generate thumbnail
+    const thumbBuffer = await generateThumbnail(buffer, IMAGE_SIZES.thumbnail.width, IMAGE_SIZES.thumbnail.height);
+    await writeFile(join(privateDir, thumbFilename), thumbBuffer);
+
+    // Store display filename in DB (media route will serve this)
+    updateData[dbField] = displayFilename;
+
     const mediaType = fieldName === 'frontScan' ? 'front' : fieldName === 'backScan' ? 'back' : 'private';
     urls[fieldName] = `/api/inventory/${params.id}/media/${mediaType}`;
   }

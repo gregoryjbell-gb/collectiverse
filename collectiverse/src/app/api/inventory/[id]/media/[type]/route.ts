@@ -3,6 +3,7 @@ import { getSession, ensureUserId } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { readFile, stat } from 'fs/promises';
 import { join, basename } from 'path';
+import { getImageSecurityHeaders } from '@/lib/image-watermark';
 
 const TYPE_FIELD_MAP: Record<string, string> = {
   front: 'frontScanUrl',
@@ -17,7 +18,7 @@ const MIME_MAP: Record<string, string> = {
   webp: 'image/webp',
 };
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string; type: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string; type: string } }) {
   const session = await getSession();
   if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
@@ -37,12 +38,25 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string;
   const storedValue = (item as Record<string, unknown>)[dbField] as string | null;
   if (!storedValue) return new NextResponse('No image', { status: 404 });
 
-  // Resolve filename — stored value is just the filename (no path)
-  // Sanitize: only use the basename to prevent path traversal
-  const filename = basename(storedValue);
+  // Determine which variant to serve
+  const size = req.nextUrl.searchParams.get('size'); // 'thumb' or default (display)
+  let filename = basename(storedValue);
+
+  // If requesting thumbnail, try to find thumb variant
+  if (size === 'thumb') {
+    const thumbFilename = filename.replace('display-', 'thumb-');
+    const thumbPath = join(process.cwd(), 'storage', 'private', 'users', userId, 'inventory', params.id, thumbFilename);
+    try {
+      await stat(thumbPath);
+      filename = thumbFilename;
+    } catch {
+      // Fall back to display version
+    }
+  }
+
   const filePath = join(process.cwd(), 'storage', 'private', 'users', userId, 'inventory', params.id, filename);
 
-  // Verify path is within allowed directory
+  // Verify path is within allowed directory (prevent traversal)
   const allowedBase = join(process.cwd(), 'storage', 'private', 'users', userId);
   if (!filePath.startsWith(allowedBase)) {
     return new NextResponse('Forbidden', { status: 403 });
@@ -63,8 +77,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string;
     status: 200,
     headers: {
       'Content-Type': contentType,
-      'Cache-Control': 'private, max-age=3600',
-      'X-Content-Type-Options': 'nosniff',
+      ...getImageSecurityHeaders(),
     },
   });
 }

@@ -87,7 +87,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [showCardForm, setShowCardForm] = useState(false);
   const [cardForm, setCardForm] = useState({ personId: '', setId: '', teamId: '', year: '', cardNumber: '', parallel: '', rookie: false, autograph: false, relic: false, serialNumber: '', printRun: '', estimatedValue: '' });
   const [showPlayerForm, setShowPlayerForm] = useState(false);
-  const [playerForm, setPlayerForm] = useState({ displayName: '', biography: '', hallOfFame: false });
+  const [playerForm, setPlayerForm] = useState({ displayName: '', biography: '', hallOfFame: false, aliases: '', imageUrl: '' });
   const [teams, setTeams] = useState<any[]>([]);
   const [showTeamForm, setShowTeamForm] = useState(false);
   const [teamForm, setTeamForm] = useState({ name: '', sportId: '', city: '' });
@@ -194,10 +194,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const createPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!playerForm.displayName) { alert('Display name is required'); return; }
-    const res = await fetch('/api/admin/players', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(playerForm) });
+    const body: any = {
+      displayName: playerForm.displayName,
+      biography: playerForm.biography || null,
+      hallOfFame: playerForm.hallOfFame,
+      aliases: playerForm.aliases ? playerForm.aliases.split(',').map((a: string) => a.trim()).filter(Boolean) : [],
+      imageUrl: playerForm.imageUrl || null,
+    };
+    const res = await fetch('/api/admin/players', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (res.ok) {
       setShowPlayerForm(false);
-      setPlayerForm({ displayName: '', biography: '', hallOfFame: false });
+      setPlayerForm({ displayName: '', biography: '', hallOfFame: false, aliases: '', imageUrl: '' });
       fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
     } else { const d = await res.json(); alert(d.error || 'Failed to create player'); }
   };
@@ -367,14 +374,19 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <form onSubmit={createPlayer} className="card-surface p-4 mb-4 space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <input className="input-field text-sm" placeholder="Display Name *" value={playerForm.displayName} onChange={e => setPlayerForm({...playerForm, displayName: e.target.value})} required />
-                  <input className="input-field text-sm" placeholder="Biography" value={playerForm.biography} onChange={e => setPlayerForm({...playerForm, biography: e.target.value})} />
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-1.5 text-sm text-silver cursor-pointer">
-                      <input type="checkbox" checked={playerForm.hallOfFame} onChange={e => setPlayerForm({...playerForm, hallOfFame: e.target.checked})} /> Hall of Fame
-                    </label>
-                    <button type="submit" className="btn-primary text-sm">Create Player</button>
-                  </div>
+                  <input className="input-field text-sm" placeholder="Aliases (comma-separated)" value={playerForm.aliases} onChange={e => setPlayerForm({...playerForm, aliases: e.target.value})} />
+                  <input className="input-field text-sm" placeholder="Image URL" value={playerForm.imageUrl} onChange={e => setPlayerForm({...playerForm, imageUrl: e.target.value})} />
                 </div>
+                <div>
+                  <textarea className="input-field text-sm w-full min-h-[60px]" placeholder="Biography" value={playerForm.biography} onChange={e => setPlayerForm({...playerForm, biography: e.target.value})} />
+                </div>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-1.5 text-sm text-silver cursor-pointer">
+                    <input type="checkbox" checked={playerForm.hallOfFame} onChange={e => setPlayerForm({...playerForm, hallOfFame: e.target.checked})} /> Hall of Fame
+                  </label>
+                  <button type="submit" className="btn-primary text-sm">Create Player</button>
+                </div>
+                <p className="text-xs text-silver">After creating, use the Edit button on the player page to add achievements, fun facts, career timeline, and more.</p>
               </form>
             )}
             <div className="overflow-x-auto">

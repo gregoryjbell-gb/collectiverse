@@ -133,8 +133,12 @@ export async function POST(req: NextRequest) {
   });
 
   // Create user-specific inventory item folder
-  const itemDir = join(process.cwd(), 'public', 'uploads', 'users', userId, 'inventory', item.id);
+  const storagePath = `/uploads/users/${userId}/inventory/${item.id}`;
+  const itemDir = join(process.cwd(), 'public', storagePath);
   await mkdir(itemDir, { recursive: true }).catch(() => {});
+
+  // Save storagePath on the item
+  await prisma.inventoryItem.update({ where: { id: item.id }, data: { storagePath } });
 
   if (purchasePrice) {
     await prisma.inventoryTransaction.create({

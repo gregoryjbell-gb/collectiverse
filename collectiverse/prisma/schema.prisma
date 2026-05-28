@@ -259,6 +259,7 @@ model InventoryItem {
   privateImageUrl String?   @map("private_image_url")
   frontScanUrl    String?   @map("front_scan_url")
   backScanUrl     String?   @map("back_scan_url")
+  storagePath     String?   @map("storage_path")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 

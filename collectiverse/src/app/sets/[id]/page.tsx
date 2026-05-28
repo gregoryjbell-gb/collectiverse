@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
+import SetCompletion from '@/components/SetCompletion';
 
 interface Props { params: { id: string } }
 
@@ -24,7 +25,8 @@ export default async function SetPage({ params }: Props) {
           <p className="text-silver">{set.manufacturer} • {set.year} {set.sport && `• ${set.sport.name}`}</p>
         </div>
         <p className="text-silver text-sm mb-6">{set.cards.length} cards</p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <SetCompletion apiUrl={`/api/card-sets/${params.id}/completion`} />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           {set.cards.map((card) => (
             <Link key={card.id} href={`/cards/${card.id}`} className="card-surface p-4 hover:border-electric/30 transition-colors">
               <p className="font-medium">{card.person?.displayName || 'Unknown'}</p>

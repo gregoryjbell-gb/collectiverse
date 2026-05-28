@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SetCompletion from '@/components/SetCompletion';
+
+function SetCompletionInline({ groupId, cardSetId }: { groupId: string; cardSetId?: string }) {
+  if (!cardSetId) return null;
+  return <SetCompletion apiUrl={`/api/inventory-groups/${groupId}/completion`} />;
+}
 
 export default function GroupDetailPage() {
   const { id } = useParams();
@@ -75,16 +81,7 @@ export default function GroupDetailPage() {
           </div>
 
           {completionPct !== null && (
-            <div className="card-surface p-5">
-              <h3 className="font-semibold mb-3">Set Completion</h3>
-              <div className="text-center">
-                <p className="text-4xl font-bold text-electric">{completionPct}%</p>
-                <p className="text-silver text-sm">{group.items?.length || 0} / {group.cardSet._count.cards} cards</p>
-              </div>
-              <div className="w-full bg-gunmetal rounded-full h-3 mt-3">
-                <div className="bg-electric h-3 rounded-full" style={{ width: `${Math.min(completionPct, 100)}%` }} />
-              </div>
-            </div>
+            <SetCompletionInline groupId={id as string} cardSetId={group.cardSet?.id} />
           )}
         </div>
 

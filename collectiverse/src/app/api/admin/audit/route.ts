@@ -8,10 +8,12 @@ export async function GET(req: NextRequest) {
 
   const entityType = req.nextUrl.searchParams.get('entityType');
   const entityId = req.nextUrl.searchParams.get('entityId');
+  const actorUserId = req.nextUrl.searchParams.get('actorUserId');
 
   const where: any = {};
   if (entityType) where.entityType = entityType;
   if (entityId) where.entityId = entityId;
+  if (actorUserId) where.actorUserId = actorUserId;
 
   const logs = await (prisma as any).auditLog.findMany({
     where,

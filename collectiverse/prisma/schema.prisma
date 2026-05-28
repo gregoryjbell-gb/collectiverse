@@ -345,16 +345,21 @@ model Report {
 }
 
 model AuditLog {
-  id         String   @id @default(cuid())
-  action     String   // APPROVE, REJECT, MERGE, DELETE, EDIT, CREATE
-  entityType String   @map("entity_type") // CARD, PLAYER, IMAGE, USER, REPORT
-  entityId   String   @map("entity_id")
-  adminId    String   @map("admin_id")
-  before     String?  // JSON snapshot
-  after      String?  // JSON snapshot
-  notes      String?
-  createdAt  DateTime @default(now()) @map("created_at")
+  id           String   @id @default(cuid())
+  actorUserId  String   @map("actor_user_id")
+  targetUserId String?  @map("target_user_id")
+  entityType   String   @map("entity_type") // INVENTORY_ITEM, INVENTORY_GROUP, LISTING, TRANSFER, CARD, CARD_SET, USER
+  entityId     String   @map("entity_id")
+  action       String   // CREATED, UPDATED, DELETED, LISTED, SOLD, TRANSFER_INITIATED, TRANSFER_ACCEPTED, TRANSFER_DECLINED, MEDIA_UPLOADED, STATUS_CHANGED
+  beforeJson   String?  @map("before_json")
+  afterJson    String?  @map("after_json")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
 
+  @@index([actorUserId])
+  @@index([entityType, entityId])
   @@map("audit_logs")
 }
 

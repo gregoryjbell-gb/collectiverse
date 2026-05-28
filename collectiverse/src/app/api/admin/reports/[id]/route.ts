@@ -19,7 +19,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   // Audit log
   await (prisma as any).auditLog.create({
-    data: { action: 'RESOLVE', entityType: 'REPORT', entityId: params.id, adminId: session.sub, notes: resolution },
+    data: { action: 'UPDATED', entityType: 'USER', entityId: params.id, actorUserId: session.sub, notes: `Report ${status}: ${resolution || ''}` },
   });
 
   return NextResponse.json({ report });

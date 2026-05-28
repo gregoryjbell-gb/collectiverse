@@ -60,10 +60,11 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
   // Audit log
   await (prisma as any).auditLog.create({
     data: {
-      action: 'TRANSFER',
+      action: 'TRANSFER_ACCEPTED',
       entityType: transfer.inventoryItemId ? 'INVENTORY_ITEM' : 'INVENTORY_GROUP',
       entityId: transfer.inventoryItemId || transfer.inventoryGroupId || params.id,
-      adminId: userId,
+      actorUserId: userId,
+      targetUserId: transfer.fromUserId,
       notes: `Transfer accepted from ${transfer.fromUserId} to ${userId}`,
     },
   }).catch(() => {});

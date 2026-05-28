@@ -524,3 +524,34 @@ model Offer {
   @@index([listingId])
   @@map("offers")
 }
+
+model UserReputation {
+  id                 String   @id @default(cuid())
+  userId             String   @unique @map("user_id")
+  totalSales         Int      @default(0) @map("total_sales")
+  totalPurchases     Int      @default(0) @map("total_purchases")
+  completedTransfers Int      @default(0) @map("completed_transfers")
+  positiveFeedback   Int      @default(0) @map("positive_feedback")
+  neutralFeedback    Int      @default(0) @map("neutral_feedback")
+  negativeFeedback   Int      @default(0) @map("negative_feedback")
+  reputationScore    Float    @default(0) @map("reputation_score")
+  verifiedCollector  Boolean  @default(false) @map("verified_collector")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("user_reputations")
+}
+
+model Feedback {
+  id         String   @id @default(cuid())
+  fromUserId String   @map("from_user_id")
+  toUserId   String   @map("to_user_id")
+  transferId String?  @map("transfer_id")
+  listingId  String?  @map("listing_id")
+  rating     String   // POSITIVE, NEUTRAL, NEGATIVE
+  comment    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([toUserId])
+  @@map("feedbacks")
+}

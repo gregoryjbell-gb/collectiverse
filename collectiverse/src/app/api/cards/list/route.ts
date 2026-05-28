@@ -25,8 +25,18 @@ export async function GET(req: NextRequest) {
       { set: { name: { contains: q, mode: 'insensitive' } } },
       { cardNumber: { contains: q } },
       { team: { name: { contains: q, mode: 'insensitive' } } },
+      { franchise: { contains: q, mode: 'insensitive' } },
+      { characterName: { contains: q, mode: 'insensitive' } },
+      { actorName: { contains: q, mode: 'insensitive' } },
+      { artistName: { contains: q, mode: 'insensitive' } },
+      { subjectName: { contains: q, mode: 'insensitive' } },
     ];
   }
+
+  const cardCategory = url.searchParams.get('cardCategory');
+  const franchise = url.searchParams.get('franchise');
+  if (cardCategory) where.cardCategory = cardCategory;
+  if (franchise) where.franchise = { contains: franchise, mode: 'insensitive' };
   if (sport) where.set = { ...(where.set || {}), sport: { name: { equals: sport, mode: 'insensitive' } } };
   if (year) where.year = parseInt(year);
   if (manufacturer) where.set = { ...(where.set || {}), manufacturer: { contains: manufacturer, mode: 'insensitive' } };
@@ -81,6 +91,14 @@ export async function GET(req: NextRequest) {
       estimatedValue: c.estimatedValue,
       frontImageUrl: c.frontImageUrl,
       thumbImageUrl: c.frontImageUrl ? c.frontImageUrl.replace('-display.', '-thumb.') : null,
+      cardCategory: c.cardCategory,
+      franchise: c.franchise,
+      characterName: c.characterName,
+      actorName: c.actorName,
+      artistName: c.artistName,
+      subjectName: c.subjectName,
+      universe: c.universe,
+      genre: c.genre,
     })),
     page,
     pageSize,

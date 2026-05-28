@@ -7,15 +7,15 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const data = await req.json();
-  const { playerName, sportName, year, setName, manufacturer, cardNumber, teamName, parallel, rookie, autograph, relic, serialNumber, printRun, frontImageUrl, backImageUrl, funFacts, whyItMatters } = data;
+  const { playerName, sportName, year, setName, manufacturer, cardNumber, teamName, parallel, rookie, autograph, relic, serialNumber, printRun, frontImageUrl, backImageUrl, funFacts, whyItMatters, cardCategory, franchise, characterName, actorName, artistName, subjectName, universe, genre } = data;
 
-  if (!playerName || !sportName || !year || !setName || !cardNumber) {
-    return NextResponse.json({ error: 'playerName, sportName, year, setName, and cardNumber are required' }, { status: 400 });
+  if (!playerName || !year || !setName || !cardNumber) {
+    return NextResponse.json({ error: 'playerName, year, setName, and cardNumber are required' }, { status: 400 });
   }
 
-  // Find or create Sport
-  let sport = await prisma.sport.findUnique({ where: { name: sportName } });
-  if (!sport) {
+  // Find or create Sport (optional for non-sports cards)
+  let sport = sportName ? await prisma.sport.findUnique({ where: { name: sportName } }) : null;
+  if (sportName && !sport) {
     sport = await prisma.sport.create({ data: { name: sportName } });
   }
 
@@ -23,8 +23,10 @@ export async function POST(req: NextRequest) {
   let person = await prisma.person.findFirst({ where: { displayName: { equals: playerName, mode: 'insensitive' } } });
   if (!person) {
     person = await prisma.person.create({ data: { displayName: playerName } });
-    // Link person to sport
-    await prisma.personSport.create({ data: { personId: person.id, sportId: sport.id } }).catch(() => {});
+    // Link person to sport if sport exists
+    if (sport) {
+      await prisma.personSport.create({ data: { personId: person.id, sportId: sport.id } }).catch(() => {});
+    }
   }
 
   // Find or create CardSet
@@ -33,7 +35,7 @@ export async function POST(req: NextRequest) {
   });
   if (!cardSet) {
     cardSet = await prisma.cardSet.create({
-      data: { name: setName, year: parseInt(year), manufacturer: manufacturer || null, sportId: sport.id },
+      data: { name: setName, year: parseInt(year), manufacturer: manufacturer || null, sportId: sport?.id || null },
     });
   }
 
@@ -42,7 +44,7 @@ export async function POST(req: NextRequest) {
   if (teamName) {
     let team = await prisma.team.findFirst({ where: { name: { equals: teamName, mode: 'insensitive' } } });
     if (!team) {
-      team = await prisma.team.create({ data: { name: teamName, sportId: sport.id } });
+      team = await prisma.team.create({ data: { name: teamName, sportId: sport?.id || '' } });
     }
     teamId = team.id;
   }
@@ -103,6 +105,14 @@ export async function POST(req: NextRequest) {
       backImageUrl: backImageUrl || null,
       funFacts: funFacts || [],
       whyItMatters: whyItMatters || null,
+      cardCategory: cardCategory || 'SPORTS',
+      franchise: franchise || null,
+      characterName: characterName || null,
+      actorName: actorName || null,
+      artistName: artistName || null,
+      subjectName: subjectName || null,
+      universe: universe || null,
+      genre: genre || null,
     },
     include: {
       person: { select: { id: true, displayName: true } },

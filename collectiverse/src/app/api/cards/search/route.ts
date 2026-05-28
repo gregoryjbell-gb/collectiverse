@@ -19,6 +19,11 @@ export async function GET(req: NextRequest) {
       { set: { name: { contains: q, mode: 'insensitive' } } },
       { cardNumber: { contains: q } },
       { team: { name: { contains: q, mode: 'insensitive' } } },
+      { franchise: { contains: q, mode: 'insensitive' } },
+      { characterName: { contains: q, mode: 'insensitive' } },
+      { actorName: { contains: q, mode: 'insensitive' } },
+      { artistName: { contains: q, mode: 'insensitive' } },
+      { subjectName: { contains: q, mode: 'insensitive' } },
     ];
   }
   if (sport) where.set = { ...where.set, sport: { name: { equals: sport, mode: 'insensitive' } } };

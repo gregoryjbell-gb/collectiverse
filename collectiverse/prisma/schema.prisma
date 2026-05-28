@@ -18,6 +18,7 @@ model Person {
   imageUrl     String?      @map("image_url")
   funFacts     String[]     @default([]) @map("fun_facts")
   whyCollectorsCare String? @map("why_collectors_care")
+  subjectType  String       @default("ATHLETE") @map("subject_type") // ATHLETE, CHARACTER, ACTOR, MUSICIAN, HISTORICAL_FIGURE, POLITICIAN, CREATOR, CELEBRITY, OTHER
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
 
@@ -81,13 +82,17 @@ model PersonSport {
 }
 
 model CardSet {
-  id           String   @id @default(cuid())
-  name         String
-  year         Int
-  manufacturer String?
-  sportId      String?  @map("sport_id")
-  releaseDate  String?  @map("release_date")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id            String   @id @default(cuid())
+  name          String
+  year          Int
+  manufacturer  String?
+  sportId       String?  @map("sport_id")
+  releaseDate   String?  @map("release_date")
+  category      String?  // SPORTS, TCG, ENTERTAINMENT, etc.
+  franchise     String?
+  publisher     String?
+  licenseHolder String?  @map("license_holder")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   sport Sport? @relation(fields: [sportId], references: [id])
   cards Card[]
@@ -117,6 +122,14 @@ model Card {
   status                String   @default("hold")
   inventoryLocation     String?  @map("inventory_location")
   funFacts              String[] @default([]) @map("fun_facts")
+  cardCategory          String   @default("SPORTS") @map("card_category") // SPORTS, TCG, ENTERTAINMENT, COMIC_RELATED, MOVIE_TV, MUSIC, HISTORY, POLITICAL, CELEBRITY, GAMING, OTHER
+  franchise             String?
+  characterName         String?  @map("character_name")
+  actorName             String?  @map("actor_name")
+  artistName            String?  @map("artist_name")
+  subjectName           String?  @map("subject_name")
+  universe              String?
+  genre                 String?
   whyItMatters          String?  @map("why_it_matters")
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")

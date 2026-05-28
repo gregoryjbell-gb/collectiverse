@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession, ensureUserId } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+const VALID_TYPES = ['PURCHASE', 'SALE', 'TRADE', 'GRADE_SUBMISSION', 'GRADE_RETURN', 'VALUE_UPDATE', 'TRANSFER', 'NOTE'];
+
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -33,9 +35,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const data = await req.json();
   const { type, amount, marketplace, counterparty, transactionDate, notes } = data;
 
-  const validTypes = ['PURCHASE', 'SALE', 'TRADE', 'GRADE_SUBMISSION', 'VALUE_UPDATE'];
-  if (!type || !validTypes.includes(type)) {
-    return NextResponse.json({ error: `type is required. Must be one of: ${validTypes.join(', ')}` }, { status: 400 });
+  if (!type || !VALID_TYPES.includes(type)) {
+    return NextResponse.json({ error: `type is required. Must be one of: ${VALID_TYPES.join(', ')}` }, { status: 400 });
   }
 
   const transaction = await prisma.inventoryTransaction.create({
@@ -49,6 +50,33 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       notes: notes || null,
     },
   });
+
+  // Side effects
+  const updateData: any = {};
+
+  if (type === 'SALE' && data.markAsSold !== false) {
+    updateData.status = 'SOLD';
+    if (amount) updateData.askingPrice = parseFloat(amount);
+  }
+
+  if (type === 'VALUE_UPDATE' && amount) {
+    updateData.estimatedValue = parseFloat(amount);
+  }
+
+  if (type === 'GRADE_RETURN') {
+    if (data.gradeCompany) updateData.gradeCompany = data.gradeCompany;
+    if (data.gradeValue) updateData.gradeValue = data.gradeValue;
+    if (data.gradeCompany) updateData.condition = data.gradeCompany;
+  }
+
+  if (type === 'PURCHASE' && amount) {
+    updateData.purchasePrice = parseFloat(amount);
+    if (transactionDate) updateData.acquisitionDate = new Date(transactionDate);
+  }
+
+  if (Object.keys(updateData).length > 0) {
+    await prisma.inventoryItem.update({ where: { id: params.id }, data: updateData });
+  }
 
   return NextResponse.json({ transaction }, { status: 201 });
 }

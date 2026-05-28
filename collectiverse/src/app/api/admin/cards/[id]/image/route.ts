@@ -14,6 +14,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!card) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
 
   const formData = await req.formData();
+  const sourceType = (formData.get('sourceType') as string) || 'ADMIN_UPLOAD';
+  const sourceName = (formData.get('sourceName') as string) || null;
+  const sourceUrl = (formData.get('sourceUrl') as string) || null;
+  const licenseType = (formData.get('licenseType') as string) || null;
+  const attributionText = (formData.get('attributionText') as string) || null;
+  const permissionStatus = (formData.get('permissionStatus') as string) || 'ALLOWED';
+
   const updateData: Record<string, string> = {};
 
   for (const fieldName of ['frontImage', 'backImage'] as const) {
@@ -29,6 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const type = fieldName === 'frontImage' ? 'front' : 'back';
+    const imageType = type === 'front' ? 'FRONT' : 'BACK';
 
     const { displayUrl, thumbUrl } = await saveCardImageDerivatives({
       cardId: params.id,
@@ -36,11 +44,27 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       buffer,
     });
 
-    if (type === 'front') {
-      updateData.frontImageUrl = displayUrl;
-    } else {
-      updateData.backImageUrl = displayUrl;
-    }
+    // Update Card model
+    if (type === 'front') updateData.frontImageUrl = displayUrl;
+    else updateData.backImageUrl = displayUrl;
+
+    // Create CardImage record with metadata
+    await prisma.cardImage.create({
+      data: {
+        cardId: params.id,
+        imageType,
+        sourceType,
+        displayUrl,
+        thumbUrl,
+        originalUrl: `/uploads/cards/${params.id}/${type}-original.webp`,
+        sourceUrl,
+        sourceName,
+        licenseType,
+        attributionText,
+        permissionStatus,
+        createdByUserId: session.sub,
+      },
+    });
   }
 
   if (Object.keys(updateData).length === 0) {

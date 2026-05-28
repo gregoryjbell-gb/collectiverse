@@ -128,6 +128,7 @@ model Card {
   transactions    Transaction[]
   qrScans         QrScan[]
   media           CardMedia[]
+  cardImages      CardImage[]
   inventoryItems  InventoryItem[]
 
   @@map("cards")
@@ -214,6 +215,31 @@ model CardMedia {
   card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@map("card_media")
+}
+
+model CardImage {
+  id                String   @id @default(cuid())
+  cardId            String   @map("card_id")
+  imageType         String   @map("image_type") // FRONT, BACK
+  sourceType        String   @map("source_type") // USER_UPLOAD, PUBLIC_REFERENCE, LICENSED, AI_GENERATED, ADMIN_UPLOAD
+  displayUrl        String?  @map("display_url")
+  thumbUrl          String?  @map("thumb_url")
+  originalUrl       String?  @map("original_url")
+  sourceUrl         String?  @map("source_url")
+  sourceName        String?  @map("source_name")
+  licenseType       String?  @map("license_type")
+  attributionText   String?  @map("attribution_text")
+  permissionStatus  String   @default("UNKNOWN") @map("permission_status") // UNKNOWN, ALLOWED, LICENSED, NEEDS_REVIEW, REJECTED
+  copyrightNotes    String?  @map("copyright_notes")
+  createdByUserId   String?  @map("created_by_user_id")
+  reviewedByAdminId String?  @map("reviewed_by_admin_id")
+  reviewedAt        DateTime? @map("reviewed_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("card_images")
 }
 
 model Admin {

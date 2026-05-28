@@ -91,6 +91,7 @@ model CardSet {
 
   sport Sport? @relation(fields: [sportId], references: [id])
   cards Card[]
+  inventoryGroups InventoryGroup[]
 
   @@map("card_sets")
 }
@@ -261,7 +262,8 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  inventoryItems InventoryItem[]
+  inventoryItems  InventoryItem[]
+  inventoryGroups InventoryGroup[]
 
   @@map("users")
 }
@@ -292,6 +294,7 @@ model InventoryItem {
   user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   card         Card                   @relation(fields: [cardId], references: [id])
   transactions InventoryTransaction[]
+  groupItems   InventoryGroupItem[]
 
   @@map("inventory_items")
 }
@@ -340,4 +343,50 @@ model AuditLog {
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@map("audit_logs")
+}
+
+model InventoryGroup {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  cardSetId       String?   @map("card_set_id")
+  name            String
+  description     String?
+  groupType       String    @map("group_type") // COMPLETE_SET, PARTIAL_SET, LOT, BINDER, BOX, PACK, CASE, SEALED_PRODUCT, OPENED_PRODUCT
+  status          String    @default("OWNED") // OWNED, FOR_SALE, SOLD, TRADE_ONLY, OPENED
+  sealed          Boolean   @default(false)
+  quantity        Int       @default(1)
+  purchasePrice   Float?    @map("purchase_price")
+  estimatedValue  Float?    @map("estimated_value")
+  askingPrice     Float?    @map("asking_price")
+  acquisitionDate DateTime? @map("acquisition_date")
+  storageLocation String?   @map("storage_location")
+  notes           String?
+  frontImageUrl   String?   @map("front_image_url")
+  backImageUrl    String?   @map("back_image_url")
+  privateImageUrl String?   @map("private_image_url")
+  storagePath     String?   @map("storage_path")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardSet CardSet? @relation(fields: [cardSetId], references: [id])
+  items   InventoryGroupItem[]
+
+  @@map("inventory_groups")
+}
+
+model InventoryGroupItem {
+  id               String   @id @default(cuid())
+  inventoryGroupId String   @map("inventory_group_id")
+  inventoryItemId  String   @map("inventory_item_id")
+  quantity         Int      @default(1)
+  notes            String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  group         InventoryGroup @relation(fields: [inventoryGroupId], references: [id], onDelete: Cascade)
+  inventoryItem InventoryItem  @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryGroupId, inventoryItemId])
+  @@map("inventory_group_items")
 }

@@ -506,3 +506,21 @@ model Notification {
   @@index([userId, read, createdAt])
   @@map("notifications")
 }
+
+model Offer {
+  id            String   @id @default(cuid())
+  listingId     String   @map("listing_id")
+  buyerUserId   String   @map("buyer_user_id")
+  sellerUserId  String   @map("seller_user_id")
+  amount        Float?
+  message       String?
+  status        String   @default("PENDING") // PENDING, ACCEPTED, DECLINED, COUNTERED, CANCELLED
+  counterAmount Float?   @map("counter_amount")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([buyerUserId])
+  @@index([sellerUserId])
+  @@index([listingId])
+  @@map("offers")
+}

@@ -102,6 +102,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
       fetch('/api/admin/sets').then((r) => r.json()).then((d) => setSets(d.sets || []));
       fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
+      fetch('/api/admin/teams').then((r) => r.ok ? r.json() : { teams: [] }).then((d) => setTeams(d.teams || [])).catch(() => {});
     }
     if (tab === 'players') {
       fetch('/api/admin/players').then((r) => r.json()).then((d) => setPlayers(d.players || []));
@@ -297,9 +298,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </select>
                   <select className="input-field text-sm" value={cardForm.teamId} onChange={e => setCardForm({...cardForm, teamId: e.target.value})}>
                     <option value="">Team (optional)</option>
-                    {players.find(p => p.id === cardForm.personId)?.personTeams?.map((pt: any) => (
-                      <option key={pt.team?.id || pt.id} value={pt.team?.id || ''}>{pt.team?.name || 'Unknown'}</option>
-                    )) || []}
+                    {teams.map(t => (
+                      <option key={t.id} value={t.id}>{t.name} ({t.sport?.name || ''})</option>
+                    ))}
                   </select>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

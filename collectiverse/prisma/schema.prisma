@@ -453,3 +453,22 @@ model OwnershipTransfer {
 
   @@map("ownership_transfers")
 }
+
+model MarketValueSnapshot {
+  id               String   @id @default(cuid())
+  cardId           String?  @map("card_id")
+  inventoryItemId  String?  @map("inventory_item_id")
+  inventoryGroupId String?  @map("inventory_group_id")
+  source           String   // MANUAL, EBAY, ALT, CARD_LADDER, PSA, COMC, USER_ESTIMATE
+  value            Float
+  currency         String   @default("USD")
+  gradeCompany     String?  @map("grade_company")
+  gradeValue       String?  @map("grade_value")
+  capturedAt       DateTime @default(now()) @map("captured_at")
+  metadata         String?  // JSON
+
+  @@index([cardId, capturedAt])
+  @@index([inventoryItemId, capturedAt])
+  @@index([inventoryGroupId, capturedAt])
+  @@map("market_value_snapshots")
+}

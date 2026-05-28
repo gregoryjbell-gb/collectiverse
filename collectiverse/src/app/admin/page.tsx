@@ -66,7 +66,7 @@ export default function AdminPage() {
 }
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<'overview' | 'cards' | 'players' | 'sets' | 'sports' | 'teams' | 'users'>('overview');
+  const [tab, setTab] = useState<'overview' | 'cards' | 'players' | 'sets' | 'sports' | 'teams' | 'users' | 'images' | 'duplicates' | 'reports'>('overview');
   const [analytics, setAnalytics] = useState<any>(null);
   const [cards, setCards] = useState<any[]>([]);
   const [players, setPlayers] = useState<any[]>([]);
@@ -91,6 +91,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [teams, setTeams] = useState<any[]>([]);
   const [showTeamForm, setShowTeamForm] = useState(false);
   const [teamForm, setTeamForm] = useState({ name: '', sportId: '', city: '' });
+  const [images, setImages] = useState<any[]>([]);
+  const [duplicates, setDuplicates] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
 
   useEffect(() => {
     fetch('/api/admin/analytics').then((r) => r.json()).then(setAnalytics);
@@ -120,6 +123,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       fetch('/api/admin/sports').then((r) => r.ok ? r.json() : { sports: [] }).then((d) => setSports(d.sports || [])).catch(() => {});
     }
     if (tab === 'users') fetch('/api/admin/users').then((r) => r.json()).then((d) => setUsers(d.users || []));
+    if (tab === 'images') fetch('/api/admin/images').then((r) => r.ok ? r.json() : { images: [] }).then((d) => setImages(d.images || [])).catch(() => {});
+    if (tab === 'duplicates') fetch('/api/admin/duplicates').then((r) => r.ok ? r.json() : { duplicates: [] }).then((d) => setDuplicates(d.duplicates || [])).catch(() => {});
+    if (tab === 'reports') fetch('/api/admin/reports').then((r) => r.ok ? r.json() : { reports: [] }).then((d) => setReports(d.reports || [])).catch(() => {});
   }, [tab]);
 
   const deleteCard = async (id: string) => {
@@ -255,7 +261,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
 
         <nav className="flex gap-2 mb-8 flex-wrap">
-          {(['overview', 'cards', 'players', 'sets', 'sports', 'teams', 'users'] as const).map((t) => (
+          {(['overview', 'cards', 'players', 'sets', 'sports', 'teams', 'users', 'images', 'duplicates', 'reports'] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg capitalize transition-colors ${tab === t ? 'bg-electric text-white' : 'bg-gunmetal/50 text-silver hover:text-white'}`}>
               {t}
             </button>
@@ -610,6 +616,87 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+        {/* Images Review */}
+        {tab === 'images' && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Image Review Queue</h2>
+            {images.length === 0 ? <p className="text-silver text-sm">No images to review.</p> : (
+              <div className="space-y-3">
+                {images.map((img: any) => (
+                  <div key={img.id} className="card-surface p-4 flex justify-between items-center">
+                    <div className="flex gap-3 items-center">
+                      {img.thumbUrl && <img src={img.thumbUrl} alt="" className="w-12 h-16 object-cover rounded" />}
+                      <div>
+                        <p className="text-sm font-medium">{img.card?.person?.displayName} — {img.card?.set?.name}</p>
+                        <p className="text-xs text-silver">{img.imageType} • {img.sourceType} • {img.permissionStatus}</p>
+                        {img.attributionText && <p className="text-xs text-silver">© {img.attributionText}</p>}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={async () => { await fetch(`/api/admin/images/${img.id}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({permissionStatus:'ALLOWED'}) }); setImages(images.map(i => i.id === img.id ? {...i, permissionStatus:'ALLOWED'} : i)); }} className="text-green-400 text-xs hover:underline">Approve</button>
+                      <button onClick={async () => { await fetch(`/api/admin/images/${img.id}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({permissionStatus:'REJECTED'}) }); setImages(images.map(i => i.id === img.id ? {...i, permissionStatus:'REJECTED'} : i)); }} className="text-red-400 text-xs hover:underline">Reject</button>
+                      <button onClick={async () => { await fetch(`/api/admin/images/${img.id}`, { method: 'DELETE' }); setImages(images.filter(i => i.id !== img.id)); }} className="text-silver text-xs hover:underline">Del</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Duplicates */}
+        {tab === 'duplicates' && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Potential Duplicates ({duplicates.length})</h2>
+            {duplicates.length === 0 ? <p className="text-silver text-sm">No duplicates detected.</p> : (
+              <div className="space-y-4">
+                {duplicates.map((group: any, i: number) => (
+                  <div key={i} className="card-surface p-4">
+                    <p className="font-medium text-sm mb-2">{group.key}</p>
+                    <div className="space-y-1">
+                      {group.cards.map((c: any) => (
+                        <div key={c.id} className="flex justify-between items-center text-xs py-1 border-b border-silver/10 last:border-0">
+                          <span className="text-silver">ID: {c.id.slice(0,8)}... {c.parallel && `• ${c.parallel}`} {c.teamName && `• ${c.teamName}`}</span>
+                          <a href={`/cards/${c.id}`} className="text-electric hover:underline">View</a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Reports */}
+        {tab === 'reports' && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Reports ({reports.length})</h2>
+            {reports.length === 0 ? <p className="text-silver text-sm">No open reports.</p> : (
+              <div className="space-y-3">
+                {reports.map((r: any) => (
+                  <div key={r.id} className="card-surface p-4 flex justify-between items-start">
+                    <div>
+                      <div className="flex gap-2 mb-1">
+                        <span className="badge bg-red-500/20 text-red-400 text-xs">{r.type}</span>
+                        <span className="badge bg-silver/10 text-silver text-xs">{r.targetType}</span>
+                        <span className={`badge text-xs ${r.status === 'OPEN' ? 'bg-amber-500/20 text-amber-400' : 'bg-green-500/20 text-green-400'}`}>{r.status}</span>
+                      </div>
+                      <p className="text-sm text-silver">{r.reason}</p>
+                      <p className="text-xs text-silver/60 mt-1">{new Date(r.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    {r.status === 'OPEN' && (
+                      <div className="flex gap-2">
+                        <button onClick={async () => { await fetch(`/api/admin/reports/${r.id}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status:'RESOLVED', resolution:'Addressed'}) }); setReports(reports.map(rep => rep.id === r.id ? {...rep, status:'RESOLVED'} : rep)); }} className="text-green-400 text-xs hover:underline">Resolve</button>
+                        <button onClick={async () => { await fetch(`/api/admin/reports/${r.id}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status:'DISMISSED', resolution:'Dismissed'}) }); setReports(reports.map(rep => rep.id === r.id ? {...rep, status:'DISMISSED'} : rep)); }} className="text-silver text-xs hover:underline">Dismiss</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

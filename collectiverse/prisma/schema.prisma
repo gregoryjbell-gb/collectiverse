@@ -311,3 +311,33 @@ model InventoryTransaction {
 
   @@map("inventory_transactions")
 }
+
+model Report {
+  id           String   @id @default(cuid())
+  type         String   // INCORRECT_INFO, COPYRIGHT, OFFENSIVE, FAKE_SCAM, DUPLICATE
+  targetType   String   @map("target_type") // CARD, PLAYER, IMAGE, INVENTORY
+  targetId     String   @map("target_id")
+  reportedById String?  @map("reported_by_id")
+  reason       String
+  status       String   @default("OPEN") // OPEN, REVIEWING, RESOLVED, DISMISSED
+  resolvedById String?  @map("resolved_by_id")
+  resolvedAt   DateTime? @map("resolved_at")
+  resolution   String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("reports")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String   // APPROVE, REJECT, MERGE, DELETE, EDIT, CREATE
+  entityType String   @map("entity_type") // CARD, PLAYER, IMAGE, USER, REPORT
+  entityId   String   @map("entity_id")
+  adminId    String   @map("admin_id")
+  before     String?  // JSON snapshot
+  after      String?  // JSON snapshot
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}

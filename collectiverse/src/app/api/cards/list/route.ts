@@ -80,6 +80,7 @@ export async function GET(req: NextRequest) {
       parallel: c.parallel,
       estimatedValue: c.estimatedValue,
       frontImageUrl: c.frontImageUrl,
+      thumbImageUrl: c.frontImageUrl ? c.frontImageUrl.replace('-display.', '-thumb.') : null,
     })),
     page,
     pageSize,

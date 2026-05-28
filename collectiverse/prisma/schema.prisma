@@ -491,3 +491,18 @@ model WishlistItem {
   @@index([userId, status])
   @@map("wishlist_items")
 }
+
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  type       String   // TRANSFER_RECEIVED, TRANSFER_ACCEPTED, TRANSFER_DECLINED, LISTING_SOLD, LISTING_CREATED, MARKET_VALUE_CHANGED, WISHLIST_MATCH, SET_COMPLETION, GROUP_OPENED, CARD_ADDED, MEDIA_UPLOADED, SYSTEM
+  title      String
+  message    String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId, read, createdAt])
+  @@map("notifications")
+}

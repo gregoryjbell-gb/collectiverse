@@ -1596,3 +1596,33 @@ model TicketCollectible {
   @@index([eventDate])
   @@map("ticket_collectibles")
 }
+
+model CoinCollectible {
+  id                     String   @id @default(cuid())
+  collectibleId          String   @unique @map("collectible_id")
+  coinType               String   @map("coin_type") // COIN, BULLION, TOKEN, MEDAL, COMMEMORATIVE, PROOF, ERROR_COIN, CURRENCY, OTHER
+  country                String
+  denomination           String?
+  year                   Int?
+  mintMark               String?  @map("mint_mark")
+  mintLocation           String?  @map("mint_location")
+  seriesName             String?  @map("series_name")
+  composition            String?
+  weight                 String?
+  diameter               String?
+  fineness               String?
+  designer               String?
+  mintage                Int?
+  proof                  Boolean  @default(false)
+  errorCoin              Boolean  @default(false) @map("error_coin")
+  errorDescription       String?  @map("error_description")
+  certificationCompany   String?  @map("certification_company")
+  certificationNumber    String?  @map("certification_number")
+  gradeValue             String?  @map("grade_value")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  @@index([country, year])
+  @@index([coinType])
+  @@map("coin_collectibles")
+}

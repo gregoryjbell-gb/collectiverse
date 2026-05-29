@@ -1825,6 +1825,8 @@ model MembershipPlan {
   canCreateStorefront      Boolean  @default(false) @map("can_create_storefront")
   canUseApi                Boolean  @default(false) @map("can_use_api")
   featuredListingsIncluded Int      @default(0) @map("featured_listings_included")
+  stripeMonthlyPriceId    String?  @map("stripe_monthly_price_id")
+  stripeYearlyPriceId     String?  @map("stripe_yearly_price_id")
   active                   Boolean  @default(true)
   createdAt                DateTime @default(now()) @map("created_at")
   updatedAt                DateTime @updatedAt @map("updated_at")
@@ -1845,6 +1847,12 @@ model UserSubscription {
   cancellationDate                DateTime? @map("cancellation_date")
   paymentProviderCustomerId       String?   @map("payment_provider_customer_id")
   paymentProviderSubscriptionId   String?   @map("payment_provider_subscription_id")
+  stripeCustomerId                String?   @map("stripe_customer_id")
+  stripeSubscriptionId            String?   @map("stripe_subscription_id")
+  stripePriceId                   String?   @map("stripe_price_id")
+  currentPeriodStart              DateTime? @map("current_period_start")
+  currentPeriodEnd                DateTime? @map("current_period_end")
+  cancelAtPeriodEnd               Boolean   @default(false) @map("cancel_at_period_end")
   createdAt                       DateTime  @default(now()) @map("created_at")
   updatedAt                       DateTime  @updatedAt @map("updated_at")
 
@@ -1884,4 +1892,16 @@ model Storefront {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("storefronts")
+}
+
+model StripeEvent {
+  id            String    @id @default(cuid())
+  stripeEventId String    @unique @map("stripe_event_id")
+  eventType     String    @map("event_type")
+  payload       String    // JSON
+  processed     Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  processedAt   DateTime? @map("processed_at")
+
+  @@map("stripe_events")
 }

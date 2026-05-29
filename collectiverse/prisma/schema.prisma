@@ -1714,3 +1714,31 @@ model BlogPostTag {
   @@unique([blogPostId, blogTagId])
   @@map("blog_post_tags")
 }
+
+model VideoGameCollectible {
+  id                  String   @id @default(cuid())
+  collectibleId       String   @unique @map("collectible_id")
+  itemType            String   @map("item_type") // GAME, CONSOLE, CONTROLLER, ACCESSORY, MANUAL, STRATEGY_GUIDE, SPECIAL_EDITION, LIMITED_EDITION, PROTOTYPE, OTHER
+  title               String
+  platform            String
+  publisher           String?
+  developer           String?
+  region              String   @default("NTSC_U") // NTSC_U, NTSC_J, PAL, REGION_FREE, OTHER
+  releaseYear         Int?     @map("release_year")
+  format              String   @default("CARTRIDGE") // CARTRIDGE, DISC, DIGITAL_CODE, BOXED_SET, HARDWARE, OTHER
+  sealed              Boolean  @default(false)
+  completeInBox       Boolean  @default(false) @map("complete_in_box")
+  includesManual      Boolean  @default(false) @map("includes_manual")
+  variantName         String?  @map("variant_name")
+  editionName         String?  @map("edition_name")
+  upc                 String?
+  gradingCompany      String?  @map("grading_company")
+  gradeValue          String?  @map("grade_value")
+  certificationNumber String?  @map("certification_number")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@index([platform])
+  @@index([title])
+  @@map("video_game_collectibles")
+}

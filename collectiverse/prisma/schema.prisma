@@ -1258,3 +1258,63 @@ model LiveBid {
   @@index([bidderUserId])
   @@map("live_bids")
 }
+
+model LiveBreak {
+  id                       String    @id @default(cuid())
+  liveEventId              String    @map("live_event_id")
+  sellerUserId             String    @map("seller_user_id")
+  inventoryGroupId         String?   @map("inventory_group_id")
+  title                    String
+  description              String?
+  breakType                String    @map("break_type") // RANDOM_TEAM, PICK_YOUR_TEAM, RANDOM_DIVISION, PICK_YOUR_PACK, SERIAL_NUMBER, DRAFT
+  status                   String    @default("SETUP") // SETUP, SELLING_SPOTS, SOLD_OUT, RANDOMIZED, BREAKING, COMPLETED, CANCELLED
+  totalSpots               Int       @map("total_spots")
+  filledSpots              Int       @default(0) @map("filled_spots")
+  pricePerSpot             Float?    @map("price_per_spot")
+  randomizationCompletedAt DateTime? @map("randomization_completed_at")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  spots LiveBreakSpot[]
+  hits  LiveBreakHit[]
+
+  @@index([liveEventId])
+  @@index([sellerUserId])
+  @@map("live_breaks")
+}
+
+model LiveBreakSpot {
+  id               String   @id @default(cuid())
+  liveBreakId      String   @map("live_break_id")
+  buyerUserId      String?  @map("buyer_user_id")
+  spotNumber       Int      @map("spot_number")
+  label            String?
+  assignedTeam     String?  @map("assigned_team")
+  assignedDivision String?  @map("assigned_division")
+  assignedPackNumber Int?   @map("assigned_pack_number")
+  price            Float?
+  status           String   @default("AVAILABLE") // AVAILABLE, RESERVED, SOLD, ASSIGNED, CANCELLED
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  liveBreak LiveBreak @relation(fields: [liveBreakId], references: [id], onDelete: Cascade)
+
+  @@index([liveBreakId])
+  @@map("live_break_spots")
+}
+
+model LiveBreakHit {
+  id               String   @id @default(cuid())
+  liveBreakId      String   @map("live_break_id")
+  liveBreakSpotId  String?  @map("live_break_spot_id")
+  inventoryItemId  String?  @map("inventory_item_id")
+  cardId           String?  @map("card_id")
+  description      String
+  assignedToUserId String?  @map("assigned_to_user_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  liveBreak LiveBreak @relation(fields: [liveBreakId], references: [id], onDelete: Cascade)
+
+  @@index([liveBreakId])
+  @@map("live_break_hits")
+}

@@ -749,3 +749,27 @@ model ShippingAddress {
   @@index([userId])
   @@map("shipping_addresses")
 }
+
+model ImportBatch {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  sourceName     String   @map("source_name")
+  sourceType     String   @map("source_type") // PUBLIC_CHECKLIST, LICENSED_DATA, USER_UPLOAD
+  permissionStatus String @map("permission_status") // PUBLIC_FACTS_ONLY, LICENSED, NEEDS_REVIEW
+  fileName       String?  @map("file_name")
+  totalRows      Int      @default(0) @map("total_rows")
+  importedRows   Int      @default(0) @map("imported_rows")
+  skippedRows    Int      @default(0) @map("skipped_rows")
+  errorRows      Int      @default(0) @map("error_rows")
+  status         String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, ROLLED_BACK
+  sportId        String?  @map("sport_id")
+  cardSetId      String?  @map("card_set_id")
+  createdCardIds String[] @default([]) @map("created_card_ids")
+  createdPersonIds String[] @default([]) @map("created_person_ids")
+  errors         String?  // JSON array of error messages
+  createdAt      DateTime @default(now()) @map("created_at")
+  completedAt    DateTime? @map("completed_at")
+
+  @@index([userId])
+  @@map("import_batches")
+}

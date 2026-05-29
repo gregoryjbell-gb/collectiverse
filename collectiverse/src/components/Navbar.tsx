@@ -43,6 +43,7 @@ const trustLinks = [
 
 const adminLinks = [
   { href: '/admin', label: 'Admin Dashboard' },
+  { href: '/admin/import', label: 'Card Import' },
   { href: '/admin?tab=cards', label: 'Card Review' },
   { href: '/admin?tab=images', label: 'Image Review' },
   { href: '/admin?tab=duplicates', label: 'Duplicate Review' },

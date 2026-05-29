@@ -1564,3 +1564,35 @@ model MemorabiliaItem {
   @@index([subjectName])
   @@map("memorabilia_items")
 }
+
+model TicketCollectible {
+  id                        String    @id @default(cuid())
+  collectibleId             String    @unique @map("collectible_id")
+  ticketType                String    @map("ticket_type") // FULL_TICKET, TICKET_STUB, SEASON_TICKET, PASS, VIP_PASS, CREDENTIAL, COMMEMORATIVE_TICKET, DIGITAL_TICKET_PRINT, OTHER
+  eventName                 String    @map("event_name")
+  eventType                 String    @map("event_type") // SPORTS, CONCERT, MOVIE, THEATER, CONVENTION, HISTORICAL, OTHER
+  eventDate                 DateTime? @map("event_date")
+  venue                     String?
+  city                      String?
+  state                     String?
+  country                   String?
+  performer                 String?
+  team                      String?
+  opponent                  String?
+  section                   String?
+  row                       String?
+  seat                      String?
+  ticketNumber              String?   @map("ticket_number")
+  barcodeRedacted           Boolean   @default(true) @map("barcode_redacted")
+  signed                    Boolean   @default(false)
+  authenticationCompany     String?   @map("authentication_company")
+  authenticationCertNumber  String?   @map("authentication_cert_number")
+  notableEvent              Boolean   @default(false) @map("notable_event")
+  notableEventNotes         String?   @map("notable_event_notes")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @updatedAt @map("updated_at")
+
+  @@index([eventName])
+  @@index([eventDate])
+  @@map("ticket_collectibles")
+}

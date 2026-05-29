@@ -42,6 +42,7 @@ const featureCards = [
   { href: '/qr-labels', label: 'QR Labels', desc: 'Generate and print labels for your items', icon: '📱', action: 'Create Labels', countKey: null },
   { href: '/activity', label: 'Account Activity', desc: 'View login history and account actions', icon: '📋', action: 'View Activity', countKey: null },
   { href: '/feedback', label: 'Reputation / Feedback', desc: 'View your trust score and buyer/seller feedback', icon: '⭐', action: 'View Feedback', countKey: null },
+  { href: '/live', label: 'Collectiverse Live', desc: 'Run live sales, claim sales, breaks, and showcases', icon: '🔴', action: 'Go Live', countKey: null },
 ];
 
 export default function DashboardPage() {

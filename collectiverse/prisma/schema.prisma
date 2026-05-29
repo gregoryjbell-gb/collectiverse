@@ -1158,3 +1158,69 @@ model InventoryImportProfile {
   @@index([sourceApp])
   @@map("inventory_import_profiles")
 }
+
+model LiveEvent {
+  id               String    @id @default(cuid())
+  sellerUserId     String    @map("seller_user_id")
+  title            String
+  description      String?
+  eventType        String    @map("event_type") // LIVE_SALE, BREAK, AUCTION, CLAIM_SALE, SHOWCASE
+  status           String    @default("SCHEDULED") // SCHEDULED, LIVE, PAUSED, ENDED, CANCELLED
+  scheduledStartAt DateTime? @map("scheduled_start_at")
+  startedAt        DateTime? @map("started_at")
+  endedAt          DateTime? @map("ended_at")
+  streamUrl        String?   @map("stream_url")
+  chatEnabled      Boolean   @default(true) @map("chat_enabled")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  items  LiveEventItem[]
+  claims LiveClaim[]
+
+  @@index([sellerUserId])
+  @@index([status])
+  @@map("live_events")
+}
+
+model LiveEventItem {
+  id               String   @id @default(cuid())
+  liveEventId      String   @map("live_event_id")
+  inventoryItemId  String?  @map("inventory_item_id")
+  inventoryGroupId String?  @map("inventory_group_id")
+  listingId        String?  @map("listing_id")
+  title            String
+  description      String?
+  startingPrice    Float?   @map("starting_price")
+  claimPrice       Float?   @map("claim_price")
+  currentPrice     Float?   @map("current_price")
+  status           String   @default("QUEUED") // QUEUED, PRESENTING, CLAIMED, SOLD, PASSED, REMOVED
+  displayOrder     Int      @map("display_order")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  liveEvent LiveEvent   @relation(fields: [liveEventId], references: [id], onDelete: Cascade)
+  claims    LiveClaim[]
+
+  @@index([liveEventId])
+  @@map("live_event_items")
+}
+
+model LiveClaim {
+  id              String   @id @default(cuid())
+  liveEventId     String   @map("live_event_id")
+  liveEventItemId String   @map("live_event_item_id")
+  buyerUserId     String   @map("buyer_user_id")
+  sellerUserId    String   @map("seller_user_id")
+  claimAmount     Float    @map("claim_amount")
+  status          String   @default("PENDING") // PENDING, ACCEPTED, DECLINED, CANCELLED, CONVERTED_TO_SALE
+  saleId          String?  @map("sale_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  liveEvent     LiveEvent     @relation(fields: [liveEventId], references: [id])
+  liveEventItem LiveEventItem @relation(fields: [liveEventItemId], references: [id])
+
+  @@index([liveEventId])
+  @@index([buyerUserId])
+  @@map("live_claims")
+}

@@ -9,6 +9,7 @@ const publicLinks = [
   { href: '/cards', label: 'Cards' },
   { href: '/sets', label: 'Sets / Checklists' },
   { href: '/marketplace', label: 'Marketplace' },
+  { href: '/live', label: 'Live' },
   { href: '/search', label: 'Search' },
 ];
 
@@ -27,6 +28,7 @@ const sellingLinks = [
   { href: '/offers', label: 'Offers' },
   { href: '/sales', label: 'Sales' },
   { href: '/sales/manual', label: 'Record External Sale' },
+  { href: '/live/create', label: 'Create Live Event' },
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/transfers', label: 'Transfers' },
   { href: '/shipments', label: 'Shipments' },

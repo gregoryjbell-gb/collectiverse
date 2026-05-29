@@ -1805,3 +1805,66 @@ model MusicCollectible {
   @@index([albumTitle])
   @@map("music_collectibles")
 }
+
+model MembershipPlan {
+  id                       String   @id @default(cuid())
+  name                     String   @unique
+  tier                     String   // EXPLORER, COLLECTOR, DEALER
+  description              String?
+  monthlyPrice             Float?   @map("monthly_price")
+  yearlyPrice              Float?   @map("yearly_price")
+  inventoryLimit           Int      @default(500) @map("inventory_limit")
+  listingLimit             Int      @default(10) @map("listing_limit")
+  storageLimitGb           Int      @default(1) @map("storage_limit_gb")
+  canImportInventory       Boolean  @default(false) @map("can_import_inventory")
+  canExportInventory       Boolean  @default(false) @map("can_export_inventory")
+  canUseAdvancedAnalytics  Boolean  @default(false) @map("can_use_advanced_analytics")
+  canHostLiveEvents        Boolean  @default(false) @map("can_host_live_events")
+  canHostLiveAuctions      Boolean  @default(false) @map("can_host_live_auctions")
+  canHostLiveBreaks        Boolean  @default(false) @map("can_host_live_breaks")
+  canCreateStorefront      Boolean  @default(false) @map("can_create_storefront")
+  canUseApi                Boolean  @default(false) @map("can_use_api")
+  featuredListingsIncluded Int      @default(0) @map("featured_listings_included")
+  active                   Boolean  @default(true)
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  subscriptions UserSubscription[]
+
+  @@map("membership_plans")
+}
+
+model UserSubscription {
+  id                              String    @id @default(cuid())
+  userId                          String    @map("user_id")
+  membershipPlanId                String    @map("membership_plan_id")
+  status                          String    @default("ACTIVE") // TRIAL, ACTIVE, PAST_DUE, CANCELLED, EXPIRED
+  billingPeriod                   String    @default("MONTHLY") // MONTHLY, YEARLY
+  startDate                       DateTime  @default(now()) @map("start_date")
+  renewalDate                     DateTime? @map("renewal_date")
+  cancellationDate                DateTime? @map("cancellation_date")
+  paymentProviderCustomerId       String?   @map("payment_provider_customer_id")
+  paymentProviderSubscriptionId   String?   @map("payment_provider_subscription_id")
+  createdAt                       DateTime  @default(now()) @map("created_at")
+  updatedAt                       DateTime  @updatedAt @map("updated_at")
+
+  plan MembershipPlan @relation(fields: [membershipPlanId], references: [id])
+
+  @@index([userId])
+  @@map("user_subscriptions")
+}
+
+model BillingHistory {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  subscriptionId String?  @map("subscription_id")
+  amount         Float
+  currency       String   @default("USD")
+  invoiceNumber  String?  @map("invoice_number")
+  status         String   @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  billingDate    DateTime @map("billing_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("billing_history")
+}

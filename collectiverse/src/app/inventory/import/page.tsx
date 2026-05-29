@@ -31,6 +31,7 @@ export default function InventoryImportPage() {
   const [previewResult, setPreviewResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [createNewCards, setCreateNewCards] = useState(false);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -80,7 +81,11 @@ export default function InventoryImportPage() {
 
   const handleConfirm = async () => {
     setLoading(true);
-    const res = await fetch(`/api/inventory/import/${batchId}/confirm`, { method: 'POST' });
+    const res = await fetch(`/api/inventory/import/${batchId}/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ createNewCards }),
+    });
     if (res.ok) router.push('/inventory');
     else { const d = await res.json(); setError(d.error || 'Import failed'); }
     setLoading(false);
@@ -185,10 +190,25 @@ export default function InventoryImportPage() {
               <div className="text-center"><p className="text-xl font-bold text-purple-400">{previewResult.duplicates}</p><p className="text-xs text-silver">Duplicates</p></div>
               <div className="text-center"><p className="text-xl font-bold text-red-400">{previewResult.errors}</p><p className="text-xs text-silver">Errors</p></div>
             </div>
-            <p className="text-sm text-silver">{previewResult.matched} cards will be added to your inventory. {previewResult.newCard} cards were not found in the database and will be skipped for now.</p>
+
+            <div className="border-t border-silver/10 pt-3">
+              <p className="text-sm font-medium mb-2">Import Options</p>
+              <p className="text-xs text-silver mb-2"><span className="text-green-400 font-bold">{previewResult.matched}</span> cards matched existing records and will be added to your inventory.</p>
+              {previewResult.newCard > 0 && (
+                <label className="flex items-center gap-2 text-sm text-silver cursor-pointer mb-2">
+                  <input type="checkbox" checked={createNewCards} onChange={e => setCreateNewCards(e.target.checked)} />
+                  Also create <span className="text-amber-400 font-bold">{previewResult.newCard}</span> new public card records for unmatched rows
+                  <span className="text-xs text-silver">(marked for admin review)</span>
+                </label>
+              )}
+              {previewResult.duplicates > 0 && (
+                <p className="text-xs text-silver"><span className="text-purple-400">{previewResult.duplicates}</span> rows appear to be duplicates of cards you already own and will be skipped.</p>
+              )}
+            </div>
+
             <div className="flex gap-3">
               <button onClick={() => setStep(2)} className="btn-secondary text-sm">Back to Mapping</button>
-              <button onClick={handleConfirm} disabled={loading || previewResult.matched === 0} className="btn-primary">{loading ? 'Importing...' : `Import ${previewResult.matched} Cards`}</button>
+              <button onClick={handleConfirm} disabled={loading || (previewResult.matched === 0 && !createNewCards)} className="btn-primary">{loading ? 'Importing...' : `Import ${previewResult.matched + (createNewCards ? previewResult.newCard : 0)} Cards`}</button>
             </div>
           </div>
         )}

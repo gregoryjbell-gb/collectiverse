@@ -142,6 +142,10 @@ model Card {
   universe              String?
   genre                 String?
   whyItMatters          String?  @map("why_it_matters")
+  publicDataStatus      String   @default("VERIFIED") @map("public_data_status") // VERIFIED, USER_IMPORTED, NEEDS_REVIEW, ADMIN_VERIFIED
+  sourceType            String?  @map("source_type") // ADMIN_IMPORT, USER_INVENTORY_IMPORT, USER_CONTRIBUTION, MANUAL_ADMIN
+  createdFromImportBatchId String? @map("created_from_import_batch_id")
+  createdByUserId       String?  @map("created_by_user_id")
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 

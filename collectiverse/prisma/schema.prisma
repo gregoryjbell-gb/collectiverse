@@ -1183,20 +1183,26 @@ model LiveEvent {
 }
 
 model LiveEventItem {
-  id               String   @id @default(cuid())
-  liveEventId      String   @map("live_event_id")
-  inventoryItemId  String?  @map("inventory_item_id")
-  inventoryGroupId String?  @map("inventory_group_id")
-  listingId        String?  @map("listing_id")
+  id               String    @id @default(cuid())
+  liveEventId      String    @map("live_event_id")
+  inventoryItemId  String?   @map("inventory_item_id")
+  inventoryGroupId String?   @map("inventory_group_id")
+  listingId        String?   @map("listing_id")
   title            String
   description      String?
-  startingPrice    Float?   @map("starting_price")
-  claimPrice       Float?   @map("claim_price")
-  currentPrice     Float?   @map("current_price")
-  status           String   @default("QUEUED") // QUEUED, PRESENTING, CLAIMED, SOLD, PASSED, REMOVED
-  displayOrder     Int      @map("display_order")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  startingPrice    Float?    @map("starting_price")
+  claimPrice       Float?    @map("claim_price")
+  currentPrice     Float?    @map("current_price")
+  status           String    @default("QUEUED") // QUEUED, PRESENTING, CLAIMED, SOLD, PASSED, REMOVED, AUCTION_ACTIVE
+  displayOrder     Int       @map("display_order")
+  auctionStartAt   DateTime? @map("auction_start_at")
+  auctionEndAt     DateTime? @map("auction_end_at")
+  minimumBidIncrement Float? @map("minimum_bid_increment")
+  reservePrice     Float?    @map("reserve_price")
+  winningBidId     String?   @map("winning_bid_id")
+  winningUserId    String?   @map("winning_user_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   liveEvent LiveEvent   @relation(fields: [liveEventId], references: [id], onDelete: Cascade)
   claims    LiveClaim[]
@@ -1236,4 +1242,19 @@ model LiveEventMessage {
 
   @@index([liveEventId, createdAt])
   @@map("live_event_messages")
+}
+
+model LiveBid {
+  id              String   @id @default(cuid())
+  liveEventId     String   @map("live_event_id")
+  liveEventItemId String   @map("live_event_item_id")
+  bidderUserId    String   @map("bidder_user_id")
+  sellerUserId    String   @map("seller_user_id")
+  amount          Float
+  status          String   @default("ACTIVE") // ACTIVE, OUTBID, WINNING, CANCELLED, WON
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([liveEventItemId])
+  @@index([bidderUserId])
+  @@map("live_bids")
 }

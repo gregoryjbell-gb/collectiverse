@@ -1937,3 +1937,39 @@ model UsageSnapshot {
   @@index([userId, snapshotDate])
   @@map("usage_snapshots")
 }
+
+model Organization {
+  id               String   @id @default(cuid())
+  ownerUserId      String   @map("owner_user_id")
+  name             String
+  slug             String   @unique
+  organizationType String   @map("organization_type") // SHOP, BREAKER, DEALER, COLLECTOR_GROUP, BUSINESS, OTHER
+  logoUrl          String?  @map("logo_url")
+  bannerUrl        String?  @map("banner_url")
+  status           String   @default("ACTIVE") // ACTIVE, PAUSED, DISABLED
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  members OrganizationMember[]
+
+  @@index([ownerUserId])
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  userId         String    @map("user_id")
+  role           String    @default("VIEWER") // OWNER, ADMIN, INVENTORY_MANAGER, SELLER, SHIPPER, SUPPORT, VIEWER
+  status         String    @default("INVITED") // INVITED, ACTIVE, REMOVED
+  invitedByUserId String?  @map("invited_by_user_id")
+  joinedAt       DateTime? @map("joined_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("organization_members")
+}

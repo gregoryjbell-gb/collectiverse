@@ -967,3 +967,67 @@ model ChecklistSection {
   @@index([productReleaseId])
   @@map("checklist_sections")
 }
+
+model Checklist {
+  id               String   @id @default(cuid())
+  productReleaseId String?  @map("product_release_id")
+  name             String
+  description      String?
+  totalCards       Int      @default(0) @map("total_cards")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  cards     ChecklistCard[]
+  parallels ChecklistParallel[]
+  inserts   ChecklistInsert[]
+
+  @@index([productReleaseId])
+  @@map("checklists")
+}
+
+model ChecklistCard {
+  id              String   @id @default(cuid())
+  checklistId     String   @map("checklist_id")
+  cardId          String?  @map("card_id")
+  checklistNumber String   @map("checklist_number")
+  sequenceNumber  Int?     @map("sequence_number")
+  isShortPrint    Boolean  @default(false) @map("is_short_print")
+  isSuperShortPrint Boolean @default(false) @map("is_super_short_print")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  checklist Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@index([checklistId])
+  @@index([cardId])
+  @@map("checklist_cards")
+}
+
+model ChecklistParallel {
+  id             String   @id @default(cuid())
+  checklistId    String   @map("checklist_id")
+  name           String
+  printRun       Int?     @map("print_run")
+  serialNumbered Boolean  @default(false) @map("serial_numbered")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  checklist Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@index([checklistId])
+  @@map("checklist_parallels")
+}
+
+model ChecklistInsert {
+  id          String   @id @default(cuid())
+  checklistId String   @map("checklist_id")
+  name        String
+  insertType  String   @map("insert_type") // AUTOGRAPH, RELIC, MEMORABILIA, NUMBERED, REFRACTOR, PRIZM, OTHER
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  checklist Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@index([checklistId])
+  @@map("checklist_inserts")
+}

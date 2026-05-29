@@ -92,7 +92,7 @@ export default async function CardPage({ params }: Props) {
 
           {/* Right: Details */}
           <div>
-            <h1 className="text-3xl font-bold mb-1">{card.person?.displayName}</h1>
+            <h1 className="text-3xl font-bold mb-1">{card.person?.displayName || card.characterName || card.subjectName || 'Unknown'}</h1>
             <p className="text-silver text-lg mb-6">{card.set?.name} #{card.cardNumber} {card.parallel && `— ${card.parallel}`}</p>
 
             {/* Badges */}
@@ -123,6 +123,13 @@ export default async function CardPage({ params }: Props) {
                 {card.parallel && <><dt className="text-silver">Parallel</dt><dd>{card.parallel}</dd></>}
                 {card.printRun && <><dt className="text-silver">Print Run</dt><dd>{card.printRun}</dd></>}
                 {card.set?.sport && <><dt className="text-silver">Sport</dt><dd>{card.set.sport.name}</dd></>}
+                {card.cardCategory !== 'SPORTS' && <><dt className="text-silver">Category</dt><dd className="capitalize">{card.cardCategory.replace(/_/g, ' ').toLowerCase()}</dd></>}
+                {card.franchise && <><dt className="text-silver">Franchise</dt><dd>{card.franchise}</dd></>}
+                {card.universe && <><dt className="text-silver">Universe</dt><dd>{card.universe}</dd></>}
+                {card.characterName && <><dt className="text-silver">Character</dt><dd>{card.characterName}</dd></>}
+                {card.actorName && <><dt className="text-silver">Actor</dt><dd>{card.actorName}</dd></>}
+                {card.artistName && <><dt className="text-silver">Artist</dt><dd>{card.artistName}</dd></>}
+                {card.genre && <><dt className="text-silver">Genre</dt><dd>{card.genre}</dd></>}
                 {card.gradingRecommendation && <><dt className="text-silver">Grade Rec.</dt><dd>{card.gradingRecommendation}</dd></>}
               </dl>
             </div>
@@ -145,7 +152,7 @@ export default async function CardPage({ params }: Props) {
               </div>
             )}
 
-            {/* Player Info */}
+            {/* Subject Info */}
             {card.person && (
               <div className="card-surface p-5 mb-6">
                 <h3 className="font-semibold mb-2">About {card.person.displayName}</h3>

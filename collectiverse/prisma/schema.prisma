@@ -1533,3 +1533,34 @@ model SealedProduct {
   @@index([year])
   @@map("sealed_products")
 }
+
+model MemorabiliaItem {
+  id                        String    @id @default(cuid())
+  collectibleId             String    @unique @map("collectible_id")
+  itemType                  String    @map("item_type") // AUTOGRAPH, JERSEY, HELMET, BALL, BAT, PHOTO, POSTER, TICKET, PROGRAM, PATCH, PIN, FIGURE, EQUIPMENT, OTHER
+  subjectName               String?   @map("subject_name")
+  team                      String?
+  sport                     String?
+  franchise                 String?
+  eventName                 String?   @map("event_name")
+  eventDate                 DateTime? @map("event_date")
+  manufacturer              String?
+  brand                     String?
+  authenticationCompany     String?   @map("authentication_company")
+  authenticationCertNumber  String?   @map("authentication_cert_number")
+  signed                    Boolean   @default(false)
+  inscription               String?
+  gameUsed                  Boolean   @default(false) @map("game_used")
+  limitedEdition            Boolean   @default(false) @map("limited_edition")
+  editionNumber             String?   @map("edition_number")
+  totalEditionSize          Int?      @map("total_edition_size")
+  dimensions                String?
+  material                  String?
+  provenanceNotes           String?   @map("provenance_notes")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @updatedAt @map("updated_at")
+
+  @@index([itemType])
+  @@index([subjectName])
+  @@map("memorabilia_items")
+}

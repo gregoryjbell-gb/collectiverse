@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import SaleFinancials from '@/components/SaleFinancials';
 
 const STEPS = [
   { key: 'LISTED', label: 'Listed', icon: '1' },
@@ -201,6 +202,9 @@ export default function SaleDetailPage() {
           </div>
         </div>
 
+        {/* Financial Panel */}
+        <SaleFinancials saleId={id} isSeller={isSeller} />
+
         {/* Cancel / Dispute at bottom */}
         {!['COMPLETED', 'CANCELLED', 'DISPUTED'].includes(sale.status) && (
           <div className="flex gap-3 mt-6 pt-4 border-t border-silver/10">
@@ -317,3 +321,4 @@ function NextActionPanel({ sale, isSeller, isBuyer, actionLoading, doAction, shi
     </div>
   );
 }
+

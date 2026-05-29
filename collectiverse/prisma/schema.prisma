@@ -687,15 +687,46 @@ model Sale {
   externalSaleDate          DateTime? @map("external_sale_date")
   externalNotes             String?  @map("external_notes")
   platformFees              Float?   @map("platform_fees")
+  paymentProcessingFee     Float?   @map("payment_processing_fee")
+  shippingCost             Float?   @map("shipping_cost")
+  insuranceCost            Float?   @map("insurance_cost")
+  suppliesCost             Float?   @map("supplies_cost")
+  taxCollected             Float?   @map("tax_collected")
+  taxRemitted              Float?   @map("tax_remitted")
+  otherCosts               Float?   @map("other_costs")
+  netProceeds              Float?   @map("net_proceeds")
+  costBasis                Float?   @map("cost_basis")
+  realizedGainLoss         Float?   @map("realized_gain_loss")
+  roiPercent               Float?   @map("roi_percent")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
   completedAt      DateTime? @map("completed_at")
+
+  expenses SaleExpense[]
 
   @@index([sellerUserId])
   @@index([buyerUserId])
   @@index([listingId])
   @@index([status])
   @@map("sales")
+}
+
+model SaleExpense {
+  id          String   @id @default(cuid())
+  saleId      String   @map("sale_id")
+  userId      String   @map("user_id")
+  expenseType String   @map("expense_type") // PLATFORM_FEE, PAYMENT_PROCESSING_FEE, SHIPPING_LABEL, INSURANCE, PACKAGING_SUPPLIES, SALES_TAX, REFUND, OTHER
+  amount      Float
+  description String?
+  expenseDate DateTime @map("expense_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
+  @@index([userId])
+  @@map("sale_expenses")
 }
 
 model ShippingAddress {

@@ -1224,3 +1224,16 @@ model LiveClaim {
   @@index([buyerUserId])
   @@map("live_claims")
 }
+
+model LiveEventMessage {
+  id                 String   @id @default(cuid())
+  liveEventId        String   @map("live_event_id")
+  userId             String?  @map("user_id")
+  messageType        String   @map("message_type") // CHAT, SYSTEM, CLAIM, SELLER_UPDATE
+  message            String
+  relatedLiveClaimId String?  @map("related_live_claim_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@index([liveEventId, createdAt])
+  @@map("live_event_messages")
+}

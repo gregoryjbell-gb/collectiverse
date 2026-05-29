@@ -46,5 +46,11 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     entityId: event.id,
   });
 
+  // Create system message in chat
+  const buyer = await (prisma as any).user.findUnique({ where: { id: buyerUserId }, select: { displayName: true, username: true } });
+  await (prisma as any).liveEventMessage.create({
+    data: { liveEventId: params.id, userId: buyerUserId, messageType: 'CLAIM', message: `${buyer?.displayName || buyer?.username || 'A buyer'} claimed "${item.title}"`, relatedLiveClaimId: claim.id },
+  });
+
   return NextResponse.json({ claim }, { status: 201 });
 }

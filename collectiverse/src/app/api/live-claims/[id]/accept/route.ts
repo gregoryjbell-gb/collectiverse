@@ -50,5 +50,10 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     entityId: sale.id,
   });
 
+  // System message
+  await (prisma as any).liveEventMessage.create({
+    data: { liveEventId: claim.liveEventId, messageType: 'SYSTEM', message: `Claim accepted! Sale created.`, relatedLiveClaimId: claim.id },
+  });
+
   return NextResponse.json({ claim: { ...claim, status: 'CONVERTED_TO_SALE' }, sale });
 }

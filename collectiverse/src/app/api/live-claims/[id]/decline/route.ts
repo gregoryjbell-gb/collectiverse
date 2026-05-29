@@ -16,5 +16,10 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
   // Reset item to presenting so others can claim
   await (prisma as any).liveEventItem.update({ where: { id: claim.liveEventItemId }, data: { status: 'PRESENTING' } });
 
+  // System message
+  await (prisma as any).liveEventMessage.create({
+    data: { liveEventId: claim.liveEventId, messageType: 'SYSTEM', message: 'Claim declined. Item is available again.', relatedLiveClaimId: claim.id },
+  });
+
   return NextResponse.json({ success: true });
 }

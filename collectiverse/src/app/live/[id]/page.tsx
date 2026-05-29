@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import LiveChat from '@/components/LiveChat';
 
 export default function LiveEventPage() {
   const { id } = useParams();
-  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
@@ -81,6 +81,13 @@ export default function LiveEventPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Live Chat */}
+        {event.chatEnabled && (
+          <div className="mt-6">
+            <LiveChat eventId={id as string} isLive={event.status === 'LIVE'} />
           </div>
         )}
       </div>

@@ -4,60 +4,73 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
-const publicLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/collectibles', label: 'Collectibles' },
+const browseLinks = [
   { href: '/cards', label: 'Cards' },
   { href: '/comics', label: 'Comics' },
+  { href: '/sealed-products', label: 'Sealed Products' },
+  { href: '/memorabilia', label: 'Memorabilia' },
+  { href: '/tickets', label: 'Tickets' },
+  { href: '/coins', label: 'Coins' },
+  { href: '/video-games', label: 'Video Games' },
+  { href: '/toys', label: 'Toys & Figures' },
+  { href: '/music', label: 'Music / Vinyl' },
   { href: '/sets', label: 'Sets / Checklists' },
-  { href: '/marketplace', label: 'Marketplace' },
-  { href: '/live', label: 'Live' },
+  { href: '/checklists', label: 'Checklists' },
+  { href: '/collectibles', label: 'All Collectibles' },
   { href: '/search', label: 'Search' },
 ];
 
 const collectionLinks = [
   { href: '/dashboard', label: 'Dashboard' },
-  { href: '/inventory', label: 'My Collection' },
+  { href: '/inventory', label: 'Inventory' },
+  { href: '/inventory/add/select-type', label: 'Add Collectible' },
   { href: '/inventory/import', label: 'Import Inventory' },
-  { href: '/inventory/groups', label: 'Groups / Sets / Lots' },
+  { href: '/inventory/groups', label: 'Groups / Lots / Sets' },
   { href: '/wishlist', label: 'Wishlist' },
-  { href: '/live/my-activity', label: 'My Live Activity' },
   { href: '/analytics', label: 'Analytics' },
   { href: '/qr-labels', label: 'QR Labels' },
 ];
 
-const sellingLinks = [
-  { href: '/listings', label: 'Listings' },
+const marketplaceLinks = [
+  { href: '/marketplace', label: 'Marketplace Home' },
+  { href: '/listings', label: 'My Listings' },
   { href: '/offers', label: 'Offers' },
   { href: '/sales', label: 'Sales' },
   { href: '/sales/manual', label: 'Record External Sale' },
-  { href: '/live/studio', label: 'Live Studio' },
-  { href: '/live/create', label: 'Create Live Event' },
-  { href: '/marketplace', label: 'Marketplace' },
-  { href: '/transfers', label: 'Transfers' },
   { href: '/shipments', label: 'Shipments' },
   { href: '/payments', label: 'Payments' },
-];
-
-const trustLinks = [
-  { href: '/notifications', label: 'Notifications' },
   { href: '/disputes', label: 'Disputes' },
   { href: '/feedback', label: 'Feedback / Reputation' },
-  { href: '/activity', label: 'Account Activity' },
+];
+
+const liveLinks = [
+  { href: '/live', label: 'Live Now' },
+  { href: '/live/studio', label: 'Live Studio' },
+  { href: '/live/my-activity', label: 'My Live Activity' },
+  { href: '/live/create', label: 'Create Live Event' },
+];
+
+const accountLinks = [
+  { href: '/notifications', label: 'Notifications' },
+  { href: '/account', label: 'Profile' },
   { href: '/account/shipping-addresses', label: 'Shipping Addresses' },
-  { href: '/account', label: 'Account' },
+  { href: '/activity', label: 'Activity' },
 ];
 
 const adminLinks = [
   { href: '/admin', label: 'Admin Dashboard' },
+  { href: '/admin/import', label: 'Imports' },
+  { href: '/admin/import/comics', label: 'Comic Imports' },
+  { href: '/admin/import-connectors', label: 'Import Connectors' },
+  { href: '/admin/import-jobs', label: 'Import Jobs' },
   { href: '/admin/card-reviews', label: 'Card Reviews' },
-  { href: '/admin/import', label: 'Card Import' },
-  { href: '/admin?tab=cards', label: 'Card Review' },
-  { href: '/admin?tab=images', label: 'Image Review' },
-  { href: '/admin?tab=duplicates', label: 'Duplicate Review' },
-  { href: '/admin?tab=reports', label: 'Reports' },
+  { href: '/admin/duplicates', label: 'Duplicates' },
+  { href: '/admin/verification', label: 'Verification' },
+  { href: '/admin/card-identities', label: 'Card Identities' },
+  { href: '/admin/manufacturers', label: 'Manufacturers' },
+  { href: '/admin/brands', label: 'Brands' },
   { href: '/admin?tab=users', label: 'Users' },
-  { href: '/admin?tab=disputes', label: 'Disputes' },
+  { href: '/admin?tab=reports', label: 'Reports' },
 ];
 
 export default function Navbar() {
@@ -69,187 +82,57 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch('/api/me')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.user) setUser(d.user); })
-      .catch(() => {});
+    fetch('/api/me').then(r => r.ok ? r.json() : null).then(d => { if (d?.user) setUser(d.user); }).catch(() => {});
   }, [pathname]);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const h = (e: MouseEvent) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setOpenDropdown(null); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    setUser(null);
-    router.push('/');
-    router.refresh();
-  };
-
-  const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    if (href.includes('?')) return pathname === href.split('?')[0];
-    return pathname.startsWith(href);
-  };
-
-  const linkClass = (href: string) =>
-    `px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(href) ? 'bg-electric/15 text-electric' : 'text-silver hover:text-white hover:bg-silver/5'}`;
-
-  const mobileLinkClass = (href: string) =>
-    `block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive(href) ? 'bg-electric/15 text-electric' : 'text-silver hover:text-white hover:bg-silver/5'}`;
-
-  const toggleDropdown = (name: string) => {
-    setOpenDropdown(openDropdown === name ? null : name);
-  };
+  const handleLogout = async () => { await fetch('/api/auth/logout', { method: 'POST' }); setUser(null); router.push('/'); router.refresh(); };
+  const isActive = (href: string) => { if (href === '/') return pathname === '/'; if (href.includes('?')) return pathname === href.split('?')[0]; return pathname.startsWith(href); };
+  const toggle = (name: string) => setOpenDropdown(openDropdown === name ? null : name);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-navy/95 backdrop-blur-md border-b border-silver/10">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-electric tracking-tight hover:opacity-90 transition-opacity">
-          Collectiverse
-        </Link>
+        <Link href="/" className="text-xl font-bold text-electric tracking-tight hover:opacity-90 transition-opacity">Collectiverse</Link>
 
-        {/* Desktop: Public links */}
-        <div className="hidden lg:flex items-center gap-1">
-          {publicLinks.map((link) => (
-            <Link key={link.href} href={link.href} className={linkClass(link.href)}>{link.label}</Link>
-          ))}
-        </div>
-
-        {/* Desktop: Right side */}
-        <div className="hidden lg:flex items-center gap-2" ref={dropdownRef}>
+        {/* Desktop */}
+        <div className="hidden lg:flex items-center gap-1" ref={dropdownRef}>
+          <NavDrop label="Browse" links={browseLinks} isOpen={openDropdown === 'browse'} onToggle={() => toggle('browse')} isActive={browseLinks.some(l => isActive(l.href))} onNav={() => setOpenDropdown(null)} />
+          {user && <NavDrop label="Collection" links={collectionLinks} isOpen={openDropdown === 'collection'} onToggle={() => toggle('collection')} isActive={collectionLinks.some(l => isActive(l.href))} onNav={() => setOpenDropdown(null)} />}
+          <NavDrop label="Marketplace" links={user ? marketplaceLinks : [{ href: '/marketplace', label: 'Marketplace' }]} isOpen={openDropdown === 'marketplace'} onToggle={() => toggle('marketplace')} isActive={marketplaceLinks.some(l => isActive(l.href))} onNav={() => setOpenDropdown(null)} />
+          <NavDrop label="Live" links={user ? liveLinks : [{ href: '/live', label: 'Live Events' }]} isOpen={openDropdown === 'live'} onToggle={() => toggle('live')} isActive={liveLinks.some(l => isActive(l.href))} onNav={() => setOpenDropdown(null)} />
+          {user && <NavDrop label="Account" links={accountLinks} isOpen={openDropdown === 'account'} onToggle={() => toggle('account')} isActive={accountLinks.some(l => isActive(l.href))} onNav={() => setOpenDropdown(null)} />}
+          {user?.role === 'ADMIN' && <NavDrop label="Admin" links={adminLinks} isOpen={openDropdown === 'admin'} onToggle={() => toggle('admin')} isActive={pathname.startsWith('/admin')} onNav={() => setOpenDropdown(null)} />}
           {user ? (
-            <>
-              {/* Collection Dropdown */}
-              <NavDropdown
-                label="Collection"
-                links={collectionLinks}
-                isOpen={openDropdown === 'collection'}
-                onToggle={() => toggleDropdown('collection')}
-                isActive={collectionLinks.some(l => isActive(l.href))}
-                onNavigate={() => setOpenDropdown(null)}
-              />
-
-              {/* Selling Dropdown */}
-              <NavDropdown
-                label="Selling"
-                links={sellingLinks}
-                isOpen={openDropdown === 'selling'}
-                onToggle={() => toggleDropdown('selling')}
-                isActive={sellingLinks.some(l => isActive(l.href))}
-                onNavigate={() => setOpenDropdown(null)}
-              />
-
-              {/* Trust & Support Dropdown */}
-              <NavDropdown
-                label="Trust"
-                links={trustLinks}
-                isOpen={openDropdown === 'trust'}
-                onToggle={() => toggleDropdown('trust')}
-                isActive={trustLinks.some(l => isActive(l.href))}
-                onNavigate={() => setOpenDropdown(null)}
-              />
-
-              {/* Admin Dropdown */}
-              {user.role === 'ADMIN' && (
-                <NavDropdown
-                  label="Admin"
-                  links={adminLinks}
-                  isOpen={openDropdown === 'admin'}
-                  onToggle={() => toggleDropdown('admin')}
-                  isActive={pathname.startsWith('/admin')}
-                  onNavigate={() => setOpenDropdown(null)}
-                />
-              )}
-
-              <Link href="/notifications" className={linkClass('/notifications')} title="Notifications">🔔</Link>
-
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gunmetal/50 border border-silver/10">
-                <span className="text-xs text-white font-medium">{user.displayName || user.username}</span>
-              </div>
-              <button onClick={handleLogout} className="px-3 py-2 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5 transition-colors">Logout</button>
-            </>
+            <button onClick={handleLogout} className="px-3 py-2 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5 transition-colors">Logout</button>
           ) : (
-            <>
-              <Link href="/login" className={linkClass('/login')}>Sign In</Link>
-              <Link href="/register" className="btn-primary text-sm px-4 py-2">Register</Link>
-            </>
+            <><Link href="/login" className="px-3 py-2 rounded-lg text-sm font-medium text-silver hover:text-white">Sign In</Link><Link href="/register" className="btn-primary text-sm px-4 py-2">Register</Link></>
           )}
         </div>
 
         {/* Mobile hamburger */}
         <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden p-2 text-silver hover:text-white" aria-label="Toggle menu" aria-expanded={mobileOpen}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {mobileOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
-          </svg>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">{mobileOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}</svg>
         </button>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="lg:hidden bg-navy border-t border-silver/10 px-6 py-4 max-h-[80vh] overflow-y-auto">
-          <div className="space-y-0.5">
-            <p className="text-xs text-silver uppercase tracking-wider px-4 py-1">Browse</p>
-            {publicLinks.map((link) => (
-              <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)} className={mobileLinkClass(link.href)}>{link.label}</Link>
-            ))}
-          </div>
-
-          {user && (
-            <>
-              <div className="border-t border-silver/10 pt-3 mt-3 space-y-0.5">
-                <p className="text-xs text-silver uppercase tracking-wider px-4 py-1">Collection</p>
-                {collectionLinks.map((link) => (
-                  <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)} className={mobileLinkClass(link.href)}>{link.label}</Link>
-                ))}
-              </div>
-
-              <div className="border-t border-silver/10 pt-3 mt-3 space-y-0.5">
-                <p className="text-xs text-silver uppercase tracking-wider px-4 py-1">Selling</p>
-                {sellingLinks.map((link) => (
-                  <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)} className={mobileLinkClass(link.href)}>{link.label}</Link>
-                ))}
-              </div>
-
-              <div className="border-t border-silver/10 pt-3 mt-3 space-y-0.5">
-                <p className="text-xs text-silver uppercase tracking-wider px-4 py-1">Trust &amp; Support</p>
-                {trustLinks.map((link) => (
-                  <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)} className={mobileLinkClass(link.href)}>{link.label}</Link>
-                ))}
-              </div>
-            </>
-          )}
-
-          {user?.role === 'ADMIN' && (
-            <div className="border-t border-silver/10 pt-3 mt-3 space-y-0.5">
-              <p className="text-xs text-silver uppercase tracking-wider px-4 py-1">Admin</p>
-              {adminLinks.map((link) => (
-                <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)} className={mobileLinkClass(link.href)}>{link.label}</Link>
-              ))}
-            </div>
-          )}
-
+          <MobileSection title="Browse" links={browseLinks} close={() => setMobileOpen(false)} />
+          {user && <MobileSection title="My Collection" links={collectionLinks} close={() => setMobileOpen(false)} />}
+          <MobileSection title="Marketplace" links={user ? marketplaceLinks : [{ href: '/marketplace', label: 'Marketplace' }]} close={() => setMobileOpen(false)} />
+          <MobileSection title="Live" links={user ? liveLinks : [{ href: '/live', label: 'Live Events' }]} close={() => setMobileOpen(false)} />
+          {user && <MobileSection title="Account" links={accountLinks} close={() => setMobileOpen(false)} />}
+          {user?.role === 'ADMIN' && <MobileSection title="Admin" links={adminLinks} close={() => setMobileOpen(false)} />}
           <div className="border-t border-silver/10 pt-3 mt-3">
-            {user ? (
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2 px-4 py-2">
-                  <span className="text-sm text-white font-medium">{user.displayName || user.username}</span>
-                  <span className="badge bg-electric/20 text-electric text-xs">{user.role}</span>
-                </div>
-                <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Logout</button>
-              </div>
-            ) : (
-              <div className="space-y-0.5">
-                <Link href="/login" onClick={() => setMobileOpen(false)} className={mobileLinkClass('/login')}>Sign In</Link>
-                <Link href="/register" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-electric hover:bg-silver/5">Register</Link>
-              </div>
-            )}
+            {user ? <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5">Logout</button>
+            : <><Link href="/login" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 text-sm text-silver hover:text-white">Sign In</Link><Link href="/register" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 text-sm text-electric">Register</Link></>}
           </div>
         </div>
       )}
@@ -257,41 +140,26 @@ export default function Navbar() {
   );
 }
 
-function NavDropdown({ label, links, isOpen, onToggle, isActive, onNavigate }: {
-  label: string;
-  links: { href: string; label: string }[];
-  isOpen: boolean;
-  onToggle: () => void;
-  isActive: boolean;
-  onNavigate: () => void;
-}) {
+function NavDrop({ label, links, isOpen, onToggle, isActive, onNav }: { label: string; links: { href: string; label: string }[]; isOpen: boolean; onToggle: () => void; isActive: boolean; onNav: () => void }) {
   return (
     <div className="relative">
-      <button
-        onClick={onToggle}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${isActive ? 'bg-electric/15 text-electric' : 'text-silver hover:text-white hover:bg-silver/5'}`}
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-      >
-        {label}
-        <svg className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+      <button onClick={onToggle} className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${isActive ? 'bg-electric/15 text-electric' : 'text-silver hover:text-white hover:bg-silver/5'}`} aria-expanded={isOpen} aria-haspopup="true">
+        {label}<svg className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
       </button>
       {isOpen && (
-        <div className="absolute top-full right-0 mt-1 w-52 bg-navy border border-silver/15 rounded-xl shadow-xl py-2 z-50">
-          {links.map((link) => (
-            <Link
-              key={link.href + link.label}
-              href={link.href}
-              onClick={onNavigate}
-              className="block px-4 py-2 text-sm text-silver hover:text-white hover:bg-silver/5 transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="absolute top-full left-0 mt-1 w-52 bg-navy border border-silver/15 rounded-xl shadow-xl py-2 z-50 max-h-[70vh] overflow-y-auto">
+          {links.map(link => <Link key={link.href + link.label} href={link.href} onClick={onNav} className="block px-4 py-2 text-sm text-silver hover:text-white hover:bg-silver/5 transition-colors">{link.label}</Link>)}
         </div>
       )}
+    </div>
+  );
+}
+
+function MobileSection({ title, links, close }: { title: string; links: { href: string; label: string }[]; close: () => void }) {
+  return (
+    <div className="border-t border-silver/10 pt-3 mt-3 first:border-0 first:pt-0 first:mt-0 space-y-0.5">
+      <p className="text-xs text-silver uppercase tracking-wider px-4 py-1">{title}</p>
+      {links.map(link => <Link key={link.href} href={link.href} onClick={close} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-silver hover:text-white hover:bg-silver/5 transition-colors">{link.label}</Link>)}
     </div>
   );
 }

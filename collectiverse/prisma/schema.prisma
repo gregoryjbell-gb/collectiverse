@@ -1417,49 +1417,68 @@ model InventoryReservation {
   @@map("inventory_reservations")
 }
 
-model ComicSeries {
-  id          String   @id @default(cuid())
-  publisher   String
-  title       String
-  volume      Int?
-  startYear   Int?     @map("start_year")
-  endYear     Int?     @map("end_year")
-  genre       String?
-  universe    String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+model ComicPublisher {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  normalizedName String   @unique @map("normalized_name")
+  aliases        String?  // JSON
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
+  series ComicSeries[]
   issues ComicIssue[]
 
-  @@index([publisher, title])
+  @@map("comic_publishers")
+}
+
+model ComicSeries {
+  id              String   @id @default(cuid())
+  collectibleId   String?  @map("collectible_id")
+  publisherId     String   @map("publisher_id")
+  title           String
+  normalizedTitle String?  @map("normalized_title")
+  volume          String?
+  startYear       Int?     @map("start_year")
+  endYear         Int?     @map("end_year")
+  universe        String?
+  genre           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  publisher ComicPublisher @relation(fields: [publisherId], references: [id])
+  issues    ComicIssue[]
+
+  @@index([publisherId, title])
   @@map("comic_series")
 }
 
 model ComicIssue {
-  id                    String   @id @default(cuid())
-  comicSeriesId         String   @map("comic_series_id")
-  issueNumber           String   @map("issue_number")
+  id                    String    @id @default(cuid())
+  collectibleId         String?   @unique @map("collectible_id")
+  comicSeriesId         String    @map("comic_series_id")
+  publisherId           String?   @map("publisher_id")
+  issueNumber           String    @map("issue_number")
   title                 String?
-  publisher             String?
-  coverDate             String?  @map("cover_date")
-  releaseDate           String?  @map("release_date")
+  coverDate             DateTime? @map("cover_date")
+  releaseDate           DateTime? @map("release_date")
   writer                String?
   artist                String?
-  coverArtist           String?  @map("cover_artist")
-  characterAppearances  String?  @map("character_appearances") // JSON
-  firstAppearance       Boolean  @default(false) @map("first_appearance")
-  keyIssue              Boolean  @default(false) @map("key_issue")
-  variantCover          Boolean  @default(false) @map("variant_cover")
-  variantName           String?  @map("variant_name")
-  printRun              Int?     @map("print_run")
+  coverArtist           String?   @map("cover_artist")
+  keyIssue              Boolean   @default(false) @map("key_issue")
+  firstAppearance       Boolean   @default(false) @map("first_appearance")
+  variantCover          Boolean   @default(false) @map("variant_cover")
+  variantName           String?   @map("variant_name")
+  printRun              Int?      @map("print_run")
   upc                   String?
   isbn                  String?
-  coverImageUrl         String?  @map("cover_image_url")
-  backImageUrl          String?  @map("back_image_url")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  synopsis              String?
+  coverImageUrl         String?   @map("cover_image_url")
+  backImageUrl          String?   @map("back_image_url")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  comicSeries ComicSeries @relation(fields: [comicSeriesId], references: [id])
+  comicSeries ComicSeries     @relation(fields: [comicSeriesId], references: [id])
+  publisher   ComicPublisher? @relation(fields: [publisherId], references: [id])
 
   @@index([comicSeriesId])
   @@map("comic_issues")

@@ -1503,3 +1503,33 @@ model Collectible {
   @@index([title])
   @@map("collectibles")
 }
+
+model SealedProduct {
+  id               String   @id @default(cuid())
+  collectibleId    String   @unique @map("collectible_id")
+  productType      String   @map("product_type") // HOBBY_BOX, RETAIL_BOX, BLASTER_BOX, MEGA_BOX, BOOSTER_BOX, BOOSTER_PACK, STARTER_DECK, TIN, CASE, CELLO_PACK, RACK_PACK, FAT_PACK, COMPLETE_FACTORY_SET, OTHER
+  manufacturerId   String?  @map("manufacturer_id")
+  brandId          String?  @map("brand_id")
+  productReleaseId String?  @map("product_release_id")
+  cardSetId        String?  @map("card_set_id")
+  comicSeriesId    String?  @map("comic_series_id")
+  name             String
+  year             Int?
+  sportId          String?  @map("sport_id")
+  category         String   @default("SPORTS_CARD") // SPORTS_CARD, TCG_CARD, NON_SPORTS_CARD, COMIC_BOOK, MIXED, OTHER
+  franchise        String?
+  configuration    String?  // e.g. "24 packs per box, 10 cards per pack"
+  packsPerBox      Int?     @map("packs_per_box")
+  cardsPerPack     Int?     @map("cards_per_pack")
+  boxesPerCase     Int?     @map("boxes_per_case")
+  sealed           Boolean  @default(true)
+  upc              String?
+  sku              String?
+  notes            String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@index([productType])
+  @@index([year])
+  @@map("sealed_products")
+}

@@ -19,6 +19,7 @@ const collectionLinks = [
   { href: '/inventory/import', label: 'Import Inventory' },
   { href: '/inventory/groups', label: 'Groups / Sets / Lots' },
   { href: '/wishlist', label: 'Wishlist' },
+  { href: '/live/my-activity', label: 'My Live Activity' },
   { href: '/analytics', label: 'Analytics' },
   { href: '/qr-labels', label: 'QR Labels' },
 ];

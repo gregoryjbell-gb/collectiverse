@@ -44,6 +44,7 @@ const featureCards = [
   { href: '/feedback', label: 'Reputation / Feedback', desc: 'View your trust score and buyer/seller feedback', icon: '⭐', action: 'View Feedback', countKey: null },
   { href: '/live', label: 'Collectiverse Live', desc: 'Run live sales, claim sales, breaks, and showcases', icon: '🔴', action: 'Go Live', countKey: null },
   { href: '/live/studio', label: 'Live Studio', desc: 'Manage live events, auctions, claim sales, and breaks', icon: '🎬', action: 'Open Studio', countKey: null },
+  { href: '/live/my-activity', label: 'My Live Activity', desc: 'Track your claims, bids, break spots, and live purchases', icon: '🎯', action: 'View Activity', countKey: null },
 ];
 
 export default function DashboardPage() {

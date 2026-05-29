@@ -1142,3 +1142,19 @@ model PublicCardReview {
   @@index([status])
   @@map("public_card_reviews")
 }
+
+model InventoryImportProfile {
+  id             String   @id @default(cuid())
+  userId         String?  @map("user_id")
+  name           String
+  sourceApp      String   @map("source_app") // LUDEX, COLLECTR, COLLX, CARDLY_AI, CARD_GRADER, GENERIC, CUSTOM
+  systemProfile  Boolean  @default(false) @map("system_profile")
+  columnMappings String   @map("column_mappings") // JSON: { sourceColumn: targetField }
+  sampleHeaders  String?  @map("sample_headers") // JSON array
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([sourceApp])
+  @@map("inventory_import_profiles")
+}

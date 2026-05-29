@@ -7,7 +7,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const after = searchParams.get('after'); // ISO timestamp for polling
   const limit = parseInt(searchParams.get('limit') || '50');
 
-  const where: any = { liveEventId: params.id };
+  const where: any = { liveEventId: params.id, deleted: false };
   if (after) where.createdAt = { gt: new Date(after) };
 
   const messages = await (prisma as any).liveEventMessage.findMany({
@@ -41,6 +41,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
   if (!event.chatEnabled) return NextResponse.json({ error: 'Chat is disabled' }, { status: 400 });
 
+  // Check if user is muted or banned
+  const userStatus = await (prisma as any).liveEventUserStatus.findUnique({
+    where: { liveEventId_userId: { liveEventId: params.id, userId } },
+  });
+  if (userStatus?.status === 'BANNED') return NextResponse.json({ error: 'You are banned from this event' }, { status: 403 });
+  if (userStatus?.status === 'MUTED') {
+    if (!userStatus.mutedUntil || new Date() < new Date(userStatus.mutedUntil)) {
+      return NextResponse.json({ error: 'You are muted' }, { status: 403 });
+    }
+  }
+
   const body = await req.json();
   const { message } = body;
   if (!message || !message.trim()) return NextResponse.json({ error: 'Message is required' }, { status: 400 });
@@ -54,7 +65,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       liveEventId: params.id,
       userId,
       messageType,
-      message: message.trim().slice(0, 500), // Limit length
+      message: message.trim().slice(0, 500),
     },
   });
 

@@ -1237,13 +1237,16 @@ model LiveClaim {
 }
 
 model LiveEventMessage {
-  id                 String   @id @default(cuid())
-  liveEventId        String   @map("live_event_id")
-  userId             String?  @map("user_id")
-  messageType        String   @map("message_type") // CHAT, SYSTEM, CLAIM, SELLER_UPDATE
+  id                 String    @id @default(cuid())
+  liveEventId        String    @map("live_event_id")
+  userId             String?   @map("user_id")
+  messageType        String    @map("message_type") // CHAT, SYSTEM, CLAIM, SELLER_UPDATE
   message            String
-  relatedLiveClaimId String?  @map("related_live_claim_id")
-  createdAt          DateTime @default(now()) @map("created_at")
+  relatedLiveClaimId String?   @map("related_live_claim_id")
+  deleted            Boolean   @default(false)
+  deletedByUserId    String?   @map("deleted_by_user_id")
+  deletedAt          DateTime? @map("deleted_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
 
   @@index([liveEventId, createdAt])
   @@map("live_event_messages")
@@ -1338,4 +1341,32 @@ model LiveEventReminder {
   @@index([userId])
   @@index([status, remindAt])
   @@map("live_event_reminders")
+}
+
+model LiveEventModerationAction {
+  id              String   @id @default(cuid())
+  liveEventId     String   @map("live_event_id")
+  moderatorUserId String   @map("moderator_user_id")
+  targetUserId    String   @map("target_user_id")
+  actionType      String   @map("action_type") // MESSAGE_DELETED, USER_MUTED, USER_UNMUTED, USER_BANNED, USER_UNBANNED, CLAIM_CANCELLED, BID_CANCELLED, WARNING_ISSUED
+  reason          String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([liveEventId])
+  @@index([targetUserId])
+  @@map("live_event_moderation_actions")
+}
+
+model LiveEventUserStatus {
+  id          String    @id @default(cuid())
+  liveEventId String    @map("live_event_id")
+  userId      String    @map("user_id")
+  status      String    @default("ACTIVE") // ACTIVE, MUTED, BANNED, WARNED
+  mutedUntil  DateTime? @map("muted_until")
+  banReason   String?   @map("ban_reason")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([liveEventId, userId])
+  @@map("live_event_user_statuses")
 }

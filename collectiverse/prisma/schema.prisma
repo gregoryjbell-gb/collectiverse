@@ -300,11 +300,17 @@ model InventoryItem {
   id              String    @id @default(cuid())
   userId          String    @map("user_id")
   cardId          String    @map("card_id")
+  comicIssueId    String?   @map("comic_issue_id")
+  collectibleType String    @default("SPORTS_CARD") @map("collectible_type") // SPORTS_CARD, TCG_CARD, NON_SPORTS_CARD, COMIC_BOOK, MEMORABILIA, SEALED_PRODUCT, OTHER
   quantity        Int       @default(1)
-  condition       String?   // RAW, PSA, BGS, SGC, CGC
+  condition       String?   // RAW, PSA, BGS, SGC, CGC, CBCS, PGX
   gradeCompany    String?   @map("grade_company")
   gradeValue      String?   @map("grade_value")
   certNumber      String?   @map("cert_number")
+  signed          Boolean   @default(false)
+  witnessedSignature Boolean @default(false) @map("witnessed_signature")
+  pressed         Boolean   @default(false)
+  cleaned         Boolean   @default(false)
   acquisitionDate DateTime? @map("acquisition_date")
   purchasePrice   Float?    @map("purchase_price")
   estimatedValue  Float?    @map("estimated_value")
@@ -1407,4 +1413,52 @@ model InventoryReservation {
   @@index([inventoryGroupId, status])
   @@index([userId])
   @@map("inventory_reservations")
+}
+
+model ComicSeries {
+  id          String   @id @default(cuid())
+  publisher   String
+  title       String
+  volume      Int?
+  startYear   Int?     @map("start_year")
+  endYear     Int?     @map("end_year")
+  genre       String?
+  universe    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  issues ComicIssue[]
+
+  @@index([publisher, title])
+  @@map("comic_series")
+}
+
+model ComicIssue {
+  id                    String   @id @default(cuid())
+  comicSeriesId         String   @map("comic_series_id")
+  issueNumber           String   @map("issue_number")
+  title                 String?
+  publisher             String?
+  coverDate             String?  @map("cover_date")
+  releaseDate           String?  @map("release_date")
+  writer                String?
+  artist                String?
+  coverArtist           String?  @map("cover_artist")
+  characterAppearances  String?  @map("character_appearances") // JSON
+  firstAppearance       Boolean  @default(false) @map("first_appearance")
+  keyIssue              Boolean  @default(false) @map("key_issue")
+  variantCover          Boolean  @default(false) @map("variant_cover")
+  variantName           String?  @map("variant_name")
+  printRun              Int?     @map("print_run")
+  upc                   String?
+  isbn                  String?
+  coverImageUrl         String?  @map("cover_image_url")
+  backImageUrl          String?  @map("back_image_url")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  comicSeries ComicSeries @relation(fields: [comicSeriesId], references: [id])
+
+  @@index([comicSeriesId])
+  @@map("comic_issues")
 }

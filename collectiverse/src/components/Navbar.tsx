@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 const publicLinks = [
   { href: '/', label: 'Home' },
   { href: '/cards', label: 'Cards' },
+  { href: '/comics', label: 'Comics' },
   { href: '/sets', label: 'Sets / Checklists' },
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/live', label: 'Live' },

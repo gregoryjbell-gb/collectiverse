@@ -82,17 +82,23 @@ model PersonSport {
 }
 
 model CardSet {
-  id            String   @id @default(cuid())
-  name          String
-  year          Int
-  manufacturer  String?
-  sportId       String?  @map("sport_id")
-  releaseDate   String?  @map("release_date")
-  category      String?  // SPORTS, TCG, ENTERTAINMENT, etc.
-  franchise     String?
-  publisher     String?
-  licenseHolder String?  @map("license_holder")
-  createdAt     DateTime @default(now()) @map("created_at")
+  id                 String   @id @default(cuid())
+  name               String
+  normalizedName     String?  @map("normalized_name")
+  year               Int
+  manufacturer       String?
+  manufacturerId     String?  @map("manufacturer_id")
+  brandId            String?  @map("brand_id")
+  productReleaseId   String?  @map("product_release_id")
+  checklistSectionId String?  @map("checklist_section_id")
+  sportId            String?  @map("sport_id")
+  releaseDate        String?  @map("release_date")
+  category           String?  // SPORTS, TCG, ENTERTAINMENT, etc.
+  franchise          String?
+  publisher          String?
+  licenseHolder      String?  @map("license_holder")
+  aliases            String?  // JSON array
+  createdAt          DateTime @default(now()) @map("created_at")
 
   sport Sport? @relation(fields: [sportId], references: [id])
   cards Card[]
@@ -106,6 +112,10 @@ model Card {
   personId              String?  @map("person_id")
   setId                 String?  @map("set_id")
   teamId                String?  @map("team_id")
+  manufacturerId        String?  @map("manufacturer_id")
+  brandId               String?  @map("brand_id")
+  productReleaseId      String?  @map("product_release_id")
+  checklistSectionId    String?  @map("checklist_section_id")
   year                  Int?
   cardNumber            String?  @map("card_number")
   parallel              String?
@@ -886,4 +896,74 @@ model ImportJob {
   @@index([connectorId])
   @@index([status])
   @@map("import_jobs")
+}
+
+model Manufacturer {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  normalizedName String   @unique @map("normalized_name")
+  aliases        String?  // JSON array
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  brands          Brand[]
+  productReleases ProductRelease[]
+
+  @@map("manufacturers")
+}
+
+model Brand {
+  id             String   @id @default(cuid())
+  manufacturerId String   @map("manufacturer_id")
+  name           String
+  normalizedName String   @map("normalized_name")
+  aliases        String?  // JSON array
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  manufacturer    Manufacturer     @relation(fields: [manufacturerId], references: [id])
+  productReleases ProductRelease[]
+
+  @@unique([manufacturerId, normalizedName])
+  @@map("brands")
+}
+
+model ProductRelease {
+  id             String    @id @default(cuid())
+  manufacturerId String    @map("manufacturer_id")
+  brandId        String?   @map("brand_id")
+  year           Int
+  name           String
+  category       String    @default("SPORTS_CARD") // SPORTS_CARD, TCG_CARD, NON_SPORTS_CARD, COMIC_RELATED, ENTERTAINMENT, OTHER
+  sportId        String?   @map("sport_id")
+  franchise      String?
+  releaseDate    DateTime? @map("release_date")
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  manufacturer      Manufacturer       @relation(fields: [manufacturerId], references: [id])
+  brand             Brand?             @relation(fields: [brandId], references: [id])
+  checklistSections ChecklistSection[]
+
+  @@index([manufacturerId, year])
+  @@index([brandId, year])
+  @@map("product_releases")
+}
+
+model ChecklistSection {
+  id               String   @id @default(cuid())
+  productReleaseId String   @map("product_release_id")
+  name             String
+  sectionType      String   @map("section_type") // BASE, SUBSET, INSERT, PARALLEL, AUTOGRAPH, RELIC, SERIAL_NUMBERED, PROMO, OTHER
+  parentSectionId  String?  @map("parent_section_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  productRelease ProductRelease    @relation(fields: [productReleaseId], references: [id])
+  parent         ChecklistSection? @relation("SectionHierarchy", fields: [parentSectionId], references: [id])
+  children       ChecklistSection[] @relation("SectionHierarchy")
+
+  @@index([productReleaseId])
+  @@map("checklist_sections")
 }

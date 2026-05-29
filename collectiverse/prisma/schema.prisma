@@ -1171,6 +1171,11 @@ model LiveEvent {
   endedAt          DateTime? @map("ended_at")
   streamUrl        String?   @map("stream_url")
   chatEnabled      Boolean   @default(true) @map("chat_enabled")
+  visibility       String    @default("PUBLIC") // PUBLIC, UNLISTED, PRIVATE
+  category         String?   // SPORTS_CARDS, TCG, NON_SPORTS, COMICS, MEMORABILIA, MIXED
+  tags             String?   // JSON array
+  featured         Boolean   @default(false)
+  reminderCount    Int       @default(0) @map("reminder_count")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
@@ -1317,4 +1322,20 @@ model LiveBreakHit {
 
   @@index([liveBreakId])
   @@map("live_break_hits")
+}
+
+model LiveEventReminder {
+  id           String    @id @default(cuid())
+  liveEventId  String    @map("live_event_id")
+  userId       String    @map("user_id")
+  reminderType String    @map("reminder_type") // EMAIL, IN_APP, PUSH
+  status       String    @default("ACTIVE") // ACTIVE, SENT, CANCELLED
+  remindAt     DateTime  @map("remind_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  sentAt       DateTime? @map("sent_at")
+
+  @@index([liveEventId])
+  @@index([userId])
+  @@index([status, remindAt])
+  @@map("live_event_reminders")
 }

@@ -25,6 +25,7 @@ const sellingLinks = [
   { href: '/listings', label: 'Listings' },
   { href: '/offers', label: 'Offers' },
   { href: '/sales', label: 'Sales' },
+  { href: '/sales/manual', label: 'Record External Sale' },
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/transfers', label: 'Transfers' },
   { href: '/shipments', label: 'Shipments' },
@@ -36,6 +37,7 @@ const trustLinks = [
   { href: '/disputes', label: 'Disputes' },
   { href: '/feedback', label: 'Feedback / Reputation' },
   { href: '/activity', label: 'Account Activity' },
+  { href: '/account/shipping-addresses', label: 'Shipping Addresses' },
   { href: '/account', label: 'Account' },
 ];
 

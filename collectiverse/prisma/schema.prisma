@@ -596,21 +596,23 @@ model DisputeMessage {
 }
 
 model Shipment {
-  id              String    @id @default(cuid())
-  listingId       String?   @map("listing_id")
-  offerId         String?   @map("offer_id")
-  transferId      String?   @map("transfer_id")
-  sellerUserId    String    @map("seller_user_id")
-  buyerUserId     String    @map("buyer_user_id")
-  carrier         String    // USPS, UPS, FEDEX, DHL, OTHER
-  trackingNumber  String?   @map("tracking_number")
-  trackingUrl     String?   @map("tracking_url")
-  shippingStatus  String    @default("NOT_SHIPPED") @map("shipping_status") // NOT_SHIPPED, LABEL_CREATED, SHIPPED, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, DELAYED, LOST, RETURNED, CANCELLED
-  shippedAt       DateTime? @map("shipped_at")
-  deliveredAt     DateTime? @map("delivered_at")
-  notes           String?
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id                      String    @id @default(cuid())
+  listingId               String?   @map("listing_id")
+  offerId                 String?   @map("offer_id")
+  transferId              String?   @map("transfer_id")
+  sellerUserId            String    @map("seller_user_id")
+  buyerUserId             String    @map("buyer_user_id")
+  carrier                 String    // USPS, UPS, FEDEX, DHL, OTHER
+  trackingNumber          String?   @map("tracking_number")
+  trackingUrl             String?   @map("tracking_url")
+  shippingStatus          String    @default("NOT_SHIPPED") @map("shipping_status") // NOT_SHIPPED, LABEL_CREATED, SHIPPED, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, DELAYED, LOST, RETURNED, CANCELLED
+  shippingAddressSnapshot String?   @map("shipping_address_snapshot") // JSON snapshot of buyer address at time of shipment
+  returnAddressSnapshot   String?   @map("return_address_snapshot") // JSON snapshot of seller return address
+  shippedAt               DateTime? @map("shipped_at")
+  deliveredAt             DateTime? @map("delivered_at")
+  notes                   String?
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
 
   @@index([sellerUserId])
   @@index([buyerUserId])
@@ -674,6 +676,13 @@ model Sale {
   paymentId        String?   @map("payment_id")
   shipmentId       String?   @map("shipment_id")
   transferId       String?   @map("transfer_id")
+  shippingAddressId         String?  @map("shipping_address_id")
+  soldExternally            Boolean  @default(false) @map("sold_externally")
+  externalPlatform          String?  @map("external_platform")
+  externalOrderId           String?  @map("external_order_id")
+  externalBuyerName         String?  @map("external_buyer_name")
+  externalShippingName      String?  @map("external_shipping_name")
+  externalShippingAddressJson String? @map("external_shipping_address_json") // JSON
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
   completedAt      DateTime? @map("completed_at")
@@ -683,4 +692,25 @@ model Sale {
   @@index([listingId])
   @@index([status])
   @@map("sales")
+}
+
+model ShippingAddress {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  label         String?  // Home, Office, PO Box
+  fullName      String   @map("full_name")
+  addressLine1  String   @map("address_line_1")
+  addressLine2  String?  @map("address_line_2")
+  city          String
+  state         String
+  postalCode    String   @map("postal_code")
+  country       String   @default("US")
+  phone         String?
+  isDefault     Boolean  @default(false) @map("is_default")
+  addressType   String   @default("BOTH") @map("address_type") // BUYER_SHIPPING, SELLER_RETURN, BOTH
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("shipping_addresses")
 }

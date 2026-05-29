@@ -301,6 +301,7 @@ model InventoryItem {
   userId          String    @map("user_id")
   cardId          String    @map("card_id")
   comicIssueId    String?   @map("comic_issue_id")
+  collectibleId   String?   @map("collectible_id")
   collectibleType String    @default("SPORTS_CARD") @map("collectible_type") // SPORTS_CARD, TCG_CARD, NON_SPORTS_CARD, COMIC_BOOK, MEMORABILIA, SEALED_PRODUCT, OTHER
   quantity        Int       @default(1)
   condition       String?   // RAW, PSA, BGS, SGC, CGC, CBCS, PGX
@@ -1461,4 +1462,23 @@ model ComicIssue {
 
   @@index([comicSeriesId])
   @@map("comic_issues")
+}
+
+model Collectible {
+  id              String   @id @default(cuid())
+  collectibleType String   @map("collectible_type") // SPORTS_CARD, TCG_CARD, NON_SPORTS_CARD, COMIC_BOOK, SEALED_PRODUCT, MEMORABILIA, TICKET, COIN, VIDEO_GAME, OTHER
+  title           String
+  year            Int?
+  manufacturer    String?
+  franchise       String?
+  imageUrl        String?  @map("image_url")
+  status          String   @default("ACTIVE") // ACTIVE, ARCHIVED, NEEDS_REVIEW
+  cardId          String?  @unique @map("card_id")
+  comicIssueId    String?  @unique @map("comic_issue_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([collectibleType])
+  @@index([title])
+  @@map("collectibles")
 }

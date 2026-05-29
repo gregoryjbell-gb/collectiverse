@@ -1853,6 +1853,11 @@ model UserSubscription {
   currentPeriodStart              DateTime? @map("current_period_start")
   currentPeriodEnd                DateTime? @map("current_period_end")
   cancelAtPeriodEnd               Boolean   @default(false) @map("cancel_at_period_end")
+  trialEndsAt                     DateTime? @map("trial_ends_at")
+  gracePeriodEndsAt               DateTime? @map("grace_period_ends_at")
+  downgradedFromPlanId            String?   @map("downgraded_from_plan_id")
+  scheduledDowngradePlanId        String?   @map("scheduled_downgrade_plan_id")
+  scheduledDowngradeAt            DateTime? @map("scheduled_downgrade_at")
   createdAt                       DateTime  @default(now()) @map("created_at")
   updatedAt                       DateTime  @updatedAt @map("updated_at")
 
@@ -1904,4 +1909,16 @@ model StripeEvent {
   processedAt   DateTime? @map("processed_at")
 
   @@map("stripe_events")
+}
+
+model SubscriptionLimitException {
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  featureKey String    @map("feature_key")
+  reason     String?
+  expiresAt  DateTime? @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, featureKey])
+  @@map("subscription_limit_exceptions")
 }

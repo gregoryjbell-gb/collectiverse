@@ -681,8 +681,12 @@ model Sale {
   externalPlatform          String?  @map("external_platform")
   externalOrderId           String?  @map("external_order_id")
   externalBuyerName         String?  @map("external_buyer_name")
+  externalBuyerContact      String?  @map("external_buyer_contact")
   externalShippingName      String?  @map("external_shipping_name")
   externalShippingAddressJson String? @map("external_shipping_address_json") // JSON
+  externalSaleDate          DateTime? @map("external_sale_date")
+  externalNotes             String?  @map("external_notes")
+  platformFees              Float?   @map("platform_fees")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
   completedAt      DateTime? @map("completed_at")

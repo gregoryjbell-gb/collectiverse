@@ -30,6 +30,7 @@ const featureCards = [
   { href: '/listings', label: 'Listings', desc: 'Create and manage items for sale', icon: '🏷️', action: 'View Listings', countKey: 'forSaleCount' },
   { href: '/offers', label: 'Offers', desc: 'Review sent and received offers', icon: '🤝', action: 'View Offers', countKey: null },
   { href: '/sales', label: 'Sales', desc: 'Track end-to-end sale transactions', icon: '💰', action: 'View Sales', countKey: null },
+  { href: '/sales/manual', label: 'Record External Sale', desc: 'Log sales from eBay, COMC, Facebook, card shows, or private deals', icon: '📝', action: 'Record Sale', countKey: null },
   { href: '/transfers', label: 'Transfers', desc: 'Track ownership transfers between users', icon: '🔄', action: 'View Transfers', countKey: null },
   { href: '/marketplace', label: 'Marketplace', desc: 'Browse and buy from other collectors', icon: '🛒', action: 'Browse Market', countKey: null },
   { href: '/shipments', label: 'Shipments', desc: 'Track shipments after sales', icon: '📬', action: 'View Shipments', countKey: null },

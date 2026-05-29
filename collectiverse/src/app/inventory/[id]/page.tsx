@@ -148,28 +148,28 @@ export default function InventoryDetailPage() {
           {showTxForm && (
             <form onSubmit={addTransaction} className="card-surface p-5 mb-6 space-y-3">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <select className="input-field text-sm" value={txForm.type} onChange={e => setTxForm({...txForm, type: e.target.value})}>
+                <select className="input-field text-sm" value={txForm.type} onChange={e => setTxForm({ ...txForm, type: e.target.value })}>
                   {TX_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
-                <input type="number" step="0.01" className="input-field text-sm" placeholder="Amount ($)" value={txForm.amount} onChange={e => setTxForm({...txForm, amount: e.target.value})} />
-                <input type="date" className="input-field text-sm" value={txForm.transactionDate} onChange={e => setTxForm({...txForm, transactionDate: e.target.value})} />
+                <input type="number" step="0.01" className="input-field text-sm" placeholder="Amount ($)" value={txForm.amount} onChange={e => setTxForm({ ...txForm, amount: e.target.value })} />
+                <input type="date" className="input-field text-sm" value={txForm.transactionDate} onChange={e => setTxForm({ ...txForm, transactionDate: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <input className="input-field text-sm" placeholder="Marketplace (eBay, COMC, etc.)" value={txForm.marketplace} onChange={e => setTxForm({...txForm, marketplace: e.target.value})} />
-                <input className="input-field text-sm" placeholder="Counterparty" value={txForm.counterparty} onChange={e => setTxForm({...txForm, counterparty: e.target.value})} />
+                <input className="input-field text-sm" placeholder="Marketplace (eBay, COMC, etc.)" value={txForm.marketplace} onChange={e => setTxForm({ ...txForm, marketplace: e.target.value })} />
+                <input className="input-field text-sm" placeholder="Counterparty" value={txForm.counterparty} onChange={e => setTxForm({ ...txForm, counterparty: e.target.value })} />
               </div>
               {txForm.type === 'GRADE_RETURN' && (
                 <div className="grid grid-cols-2 gap-3">
-                  <input className="input-field text-sm" placeholder="Grade Company (PSA, BGS...)" value={txForm.gradeCompany} onChange={e => setTxForm({...txForm, gradeCompany: e.target.value})} />
-                  <input className="input-field text-sm" placeholder="Grade Value (e.g. 9.5)" value={txForm.gradeValue} onChange={e => setTxForm({...txForm, gradeValue: e.target.value})} />
+                  <input className="input-field text-sm" placeholder="Grade Company (PSA, BGS...)" value={txForm.gradeCompany} onChange={e => setTxForm({ ...txForm, gradeCompany: e.target.value })} />
+                  <input className="input-field text-sm" placeholder="Grade Value (e.g. 9.5)" value={txForm.gradeValue} onChange={e => setTxForm({ ...txForm, gradeValue: e.target.value })} />
                 </div>
               )}
               {txForm.type === 'SALE' && (
                 <label className="flex items-center gap-2 text-sm text-silver cursor-pointer">
-                  <input type="checkbox" checked={txForm.markAsSold} onChange={e => setTxForm({...txForm, markAsSold: e.target.checked})} /> Mark item as SOLD
+                  <input type="checkbox" checked={txForm.markAsSold} onChange={e => setTxForm({ ...txForm, markAsSold: e.target.checked })} /> Mark item as SOLD
                 </label>
               )}
-              <textarea className="input-field text-sm min-h-[50px] w-full" placeholder="Notes" value={txForm.notes} onChange={e => setTxForm({...txForm, notes: e.target.value})} />
+              <textarea className="input-field text-sm min-h-[50px] w-full" placeholder="Notes" value={txForm.notes} onChange={e => setTxForm({ ...txForm, notes: e.target.value })} />
               <button type="submit" disabled={txSaving} className="btn-primary text-sm">{txSaving ? 'Saving...' : 'Add Transaction'}</button>
             </form>
           )}
@@ -182,17 +182,17 @@ export default function InventoryDetailPage() {
                 editingTx === tx.id ? (
                   <div key={tx.id} className="card-surface p-4 space-y-2 border-electric/30 border">
                     <div className="grid grid-cols-3 gap-2">
-                      <select className="input-field text-xs" value={editTxForm.type} onChange={e => setEditTxForm({...editTxForm, type: e.target.value})}>
+                      <select className="input-field text-xs" value={editTxForm.type} onChange={e => setEditTxForm({ ...editTxForm, type: e.target.value })}>
                         {TX_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
-                      <input type="number" step="0.01" className="input-field text-xs" placeholder="Amount" value={editTxForm.amount || ''} onChange={e => setEditTxForm({...editTxForm, amount: e.target.value})} />
-                      <input type="date" className="input-field text-xs" value={editTxForm.transactionDate || ''} onChange={e => setEditTxForm({...editTxForm, transactionDate: e.target.value})} />
+                      <input type="number" step="0.01" className="input-field text-xs" placeholder="Amount" value={editTxForm.amount || ''} onChange={e => setEditTxForm({ ...editTxForm, amount: e.target.value })} />
+                      <input type="date" className="input-field text-xs" value={editTxForm.transactionDate || ''} onChange={e => setEditTxForm({ ...editTxForm, transactionDate: e.target.value })} />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <input className="input-field text-xs" placeholder="Marketplace" value={editTxForm.marketplace || ''} onChange={e => setEditTxForm({...editTxForm, marketplace: e.target.value})} />
-                      <input className="input-field text-xs" placeholder="Counterparty" value={editTxForm.counterparty || ''} onChange={e => setEditTxForm({...editTxForm, counterparty: e.target.value})} />
+                      <input className="input-field text-xs" placeholder="Marketplace" value={editTxForm.marketplace || ''} onChange={e => setEditTxForm({ ...editTxForm, marketplace: e.target.value })} />
+                      <input className="input-field text-xs" placeholder="Counterparty" value={editTxForm.counterparty || ''} onChange={e => setEditTxForm({ ...editTxForm, counterparty: e.target.value })} />
                     </div>
-                    <textarea className="input-field text-xs min-h-[40px] w-full" placeholder="Notes" value={editTxForm.notes || ''} onChange={e => setEditTxForm({...editTxForm, notes: e.target.value})} />
+                    <textarea className="input-field text-xs min-h-[40px] w-full" placeholder="Notes" value={editTxForm.notes || ''} onChange={e => setEditTxForm({ ...editTxForm, notes: e.target.value })} />
                     <div className="flex gap-2">
                       <button onClick={() => saveEditTx(tx.id)} className="text-green-400 text-xs hover:underline">Save</button>
                       <button onClick={() => setEditingTx(null)} className="text-silver text-xs hover:underline">Cancel</button>

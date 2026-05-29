@@ -146,6 +146,7 @@ model Card {
   sourceType            String?  @map("source_type") // ADMIN_IMPORT, USER_INVENTORY_IMPORT, USER_CONTRIBUTION, MANUAL_ADMIN
   createdFromImportBatchId String? @map("created_from_import_batch_id")
   createdByUserId       String?  @map("created_by_user_id")
+  collectibleId         String?  @unique @map("collectible_id")
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
@@ -1468,11 +1469,12 @@ model Collectible {
   id              String   @id @default(cuid())
   collectibleType String   @map("collectible_type") // SPORTS_CARD, TCG_CARD, NON_SPORTS_CARD, COMIC_BOOK, SEALED_PRODUCT, MEMORABILIA, TICKET, COIN, VIDEO_GAME, OTHER
   title           String
+  subtitle        String?
   year            Int?
   manufacturer    String?
   franchise       String?
-  imageUrl        String?  @map("image_url")
-  status          String   @default("ACTIVE") // ACTIVE, ARCHIVED, NEEDS_REVIEW
+  primaryImageUrl String?  @map("primary_image_url")
+  status          String   @default("ACTIVE") // ACTIVE, NEEDS_REVIEW, ARCHIVED
   cardId          String?  @unique @map("card_id")
   comicIssueId    String?  @unique @map("comic_issue_id")
   createdAt       DateTime @default(now()) @map("created_at")

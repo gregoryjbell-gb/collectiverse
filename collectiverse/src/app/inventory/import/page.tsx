@@ -184,20 +184,26 @@ export default function InventoryImportPage() {
         {step === 4 && previewResult && (
           <div className="card-surface p-6 space-y-4">
             <h2 className="font-semibold">Import Preview</h2>
-            <div className="grid grid-cols-4 gap-4">
-              <div className="text-center"><p className="text-xl font-bold text-green-400">{previewResult.matched}</p><p className="text-xs text-silver">Matched</p></div>
-              <div className="text-center"><p className="text-xl font-bold text-amber-400">{previewResult.newCard}</p><p className="text-xs text-silver">Not Found</p></div>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+              <div className="text-center"><p className="text-xl font-bold text-green-400">{previewResult.exactMatch || 0}</p><p className="text-xs text-silver">Exact</p></div>
+              <div className="text-center"><p className="text-xl font-bold text-blue-400">{previewResult.highConfidence || 0}</p><p className="text-xs text-silver">High Conf.</p></div>
+              <div className="text-center"><p className="text-xl font-bold text-amber-400">{previewResult.possibleMatch || 0}</p><p className="text-xs text-silver">Possible</p></div>
+              <div className="text-center"><p className="text-xl font-bold text-red-400">{previewResult.noMatch || 0}</p><p className="text-xs text-silver">No Match</p></div>
               <div className="text-center"><p className="text-xl font-bold text-purple-400">{previewResult.duplicates}</p><p className="text-xs text-silver">Duplicates</p></div>
-              <div className="text-center"><p className="text-xl font-bold text-red-400">{previewResult.errors}</p><p className="text-xs text-silver">Errors</p></div>
+              <div className="text-center"><p className="text-xl font-bold text-silver">{previewResult.errors}</p><p className="text-xs text-silver">Errors</p></div>
             </div>
 
             <div className="border-t border-silver/10 pt-3">
               <p className="text-sm font-medium mb-2">Import Options</p>
-              <p className="text-xs text-silver mb-2"><span className="text-green-400 font-bold">{previewResult.matched}</span> cards matched existing records and will be added to your inventory.</p>
-              {previewResult.newCard > 0 && (
+              <p className="text-xs text-silver mb-1"><span className="text-green-400">Exact + High Confidence</span> matches will be auto-imported.</p>
+              {(previewResult.possibleMatch || 0) > 0 && (
+                <p className="text-xs text-silver mb-1"><span className="text-amber-400">{previewResult.possibleMatch}</span> possible matches will use the best candidate (you can review in batch detail later).</p>
+              )}
+              <p className="text-xs text-silver mb-2"><span className="text-green-400 font-bold">{previewResult.matched}</span> cards total will be added to your inventory.</p>
+              {previewResult.noMatch > 0 && (
                 <label className="flex items-center gap-2 text-sm text-silver cursor-pointer mb-2">
                   <input type="checkbox" checked={createNewCards} onChange={e => setCreateNewCards(e.target.checked)} />
-                  Also create <span className="text-amber-400 font-bold">{previewResult.newCard}</span> new public card records for unmatched rows
+                  Also create <span className="text-amber-400 font-bold">{previewResult.noMatch}</span> new public card records for unmatched rows
                   <span className="text-xs text-silver">(marked for admin review)</span>
                 </label>
               )}

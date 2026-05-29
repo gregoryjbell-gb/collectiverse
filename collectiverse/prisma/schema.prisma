@@ -1112,6 +1112,10 @@ model InventoryImportRow {
   mappedJson             String?  @map("mapped_json") // JSON
   status                 String   @default("NEEDS_MAPPING") // NEEDS_MAPPING, MATCHED_CARD, CREATE_CARD_REQUIRED, IMPORTED, SKIPPED_DUPLICATE, ERROR
   matchedCardId          String?  @map("matched_card_id")
+  matchConfidence        Float?   @map("match_confidence")
+  matchStatus            String?  @map("match_status") // EXACT_MATCH, HIGH_CONFIDENCE, POSSIBLE_MATCH, NO_MATCH
+  candidateMatchesJson   String?  @map("candidate_matches_json") // JSON
+  selectedCardId         String?  @map("selected_card_id")
   createdInventoryItemId String?  @map("created_inventory_item_id")
   errorMessage           String?  @map("error_message")
   createdAt              DateTime @default(now()) @map("created_at")

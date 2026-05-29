@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession, ensureUserId } from '@/lib/auth';
-import { checkExistingCard } from '@/lib/card-fingerprint';
+import { classifyImportMatch } from '@/lib/import-matching';
 
 export async function POST(_req: NextRequest, { params }: { params: { batchId: string } }) {
   const session = await getSession();
@@ -13,77 +13,91 @@ export async function POST(_req: NextRequest, { params }: { params: { batchId: s
 
   const rows = await (prisma as any).inventoryImportRow.findMany({ where: { batchId: params.batchId } });
 
-  let matched = 0;
-  let newCard = 0;
+  let exactMatch = 0;
+  let highConfidence = 0;
+  let possibleMatch = 0;
+  let noMatch = 0;
   let errors = 0;
   let duplicates = 0;
 
   for (const row of rows) {
-    if (!row.mappedJson) { errors++; await updateRow(row.id, 'ERROR', null, 'No mapped data'); continue; }
+    if (!row.mappedJson) { errors++; await updateRow(row.id, 'ERROR', null, null, null, null, 'No mapped data'); continue; }
     const mapped = JSON.parse(row.mappedJson);
 
     if (!mapped.subjectName && !mapped.cardNumber) {
       errors++;
-      await updateRow(row.id, 'ERROR', null, 'Missing subject name and card number');
+      await updateRow(row.id, 'ERROR', null, null, null, null, 'Missing subject name and card number');
       continue;
     }
 
-    // Try to match to existing card
-    const existingCardId = await checkExistingCard({
-      year: mapped.year, manufacturer: mapped.manufacturer, setName: mapped.setName,
-      cardNumber: mapped.cardNumber, subjectName: mapped.subjectName,
-      parallel: mapped.parallel, variation: mapped.variation,
-    });
+    // Run confidence matching
+    const result = await classifyImportMatch(mapped);
 
-    if (existingCardId) {
+    if (result.cardId) {
       // Check for duplicate inventory
       const existingInv = await (prisma as any).inventoryItem.findFirst({
         where: {
-          userId, cardId: existingCardId,
+          userId, cardId: result.cardId,
           ...(mapped.gradeCompany ? { gradeCompany: mapped.gradeCompany } : {}),
           ...(mapped.gradeValue ? { gradeValue: mapped.gradeValue } : {}),
           ...(mapped.certNumber ? { certNumber: mapped.certNumber } : {}),
         },
       });
-      if (existingInv) {
+
+      if (existingInv && result.status === 'EXACT_MATCH') {
         duplicates++;
-        await updateRow(row.id, 'SKIPPED_DUPLICATE', existingCardId, null);
-      } else {
-        matched++;
-        await updateRow(row.id, 'MATCHED_CARD', existingCardId, null);
+        await updateRow(row.id, 'SKIPPED_DUPLICATE', result.cardId, result.confidence, result.status, result.candidates, null);
+        continue;
       }
-    } else {
-      // Try fuzzy match by person + set + cardNumber
-      let fuzzyMatch = null;
-      if (mapped.subjectName && mapped.cardNumber) {
-        const person = await (prisma as any).person.findFirst({ where: { displayName: { equals: mapped.subjectName, mode: 'insensitive' } } });
-        if (person) {
-          fuzzyMatch = await (prisma as any).card.findFirst({
-            where: { personId: person.id, cardNumber: mapped.cardNumber },
-          });
-        }
-      }
-      if (fuzzyMatch) {
-        matched++;
-        await updateRow(row.id, 'MATCHED_CARD', fuzzyMatch.id, null);
-      } else {
-        newCard++;
-        await updateRow(row.id, 'CREATE_CARD_REQUIRED', null, null);
-      }
+    }
+
+    switch (result.status) {
+      case 'EXACT_MATCH':
+        exactMatch++;
+        await updateRow(row.id, 'MATCHED_CARD', result.cardId, result.confidence, 'EXACT_MATCH', result.candidates, null);
+        break;
+      case 'HIGH_CONFIDENCE':
+        highConfidence++;
+        await updateRow(row.id, 'MATCHED_CARD', result.cardId, result.confidence, 'HIGH_CONFIDENCE', result.candidates, null);
+        break;
+      case 'POSSIBLE_MATCH':
+        possibleMatch++;
+        await updateRow(row.id, 'MATCHED_CARD', result.cardId, result.confidence, 'POSSIBLE_MATCH', result.candidates, null);
+        break;
+      case 'NO_MATCH':
+        noMatch++;
+        await updateRow(row.id, 'CREATE_CARD_REQUIRED', null, result.confidence, 'NO_MATCH', result.candidates, null);
+        break;
     }
   }
 
+  const matched = exactMatch + highConfidence;
+
   await (prisma as any).inventoryImportBatch.update({
     where: { id: params.batchId },
-    data: { status: 'PREVIEWED', matchedRows: matched, newCardRows: newCard, errorRows: errors, duplicateRows: duplicates },
+    data: { status: 'PREVIEWED', matchedRows: matched, newCardRows: noMatch, errorRows: errors, duplicateRows: duplicates },
   });
 
-  return NextResponse.json({ matched, newCard, errors, duplicates, total: rows.length });
+  return NextResponse.json({
+    matched, exactMatch, highConfidence, possibleMatch, noMatch, errors, duplicates,
+    total: rows.length,
+  });
 }
 
-async function updateRow(id: string, status: string, cardId: string | null, error: string | null) {
+async function updateRow(
+  id: string, status: string, cardId: string | null,
+  confidence: number | null, matchStatus: string | null,
+  candidates: any[] | null, error: string | null
+) {
   await (prisma as any).inventoryImportRow.update({
     where: { id },
-    data: { status, matchedCardId: cardId, errorMessage: error },
+    data: {
+      status,
+      matchedCardId: cardId,
+      matchConfidence: confidence,
+      matchStatus,
+      candidateMatchesJson: candidates && candidates.length > 0 ? JSON.stringify(candidates) : null,
+      errorMessage: error,
+    },
   });
 }

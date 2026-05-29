@@ -1050,3 +1050,31 @@ model ImportQueueJob {
   @@index([status])
   @@map("import_queue_jobs")
 }
+
+model ImportCreatedRecord {
+  id            String   @id @default(cuid())
+  importBatchId String   @map("import_batch_id")
+  entityType    String   @map("entity_type") // CARD, PERSON, TEAM, SPORT, CARD_SET, MANUFACTURER, BRAND, PRODUCT_RELEASE, CHECKLIST, CHECKLIST_CARD, CHECKLIST_SECTION, CARD_IDENTITY, CARD_FACT, CARD_SOURCE
+  entityId      String   @map("entity_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([importBatchId])
+  @@index([entityType, entityId])
+  @@map("import_created_records")
+}
+
+model ImportRollback {
+  id               String    @id @default(cuid())
+  importBatchId    String    @map("import_batch_id")
+  adminUserId      String    @map("admin_user_id")
+  status           String    @default("STARTED") // STARTED, COMPLETED, FAILED, PARTIAL
+  totalRecords     Int       @default(0) @map("total_records")
+  rolledBackRecords Int      @default(0) @map("rolled_back_records")
+  skippedRecords   Int       @default(0) @map("skipped_records")
+  errorMessage     String?   @map("error_message")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  completedAt      DateTime? @map("completed_at")
+
+  @@index([importBatchId])
+  @@map("import_rollbacks")
+}

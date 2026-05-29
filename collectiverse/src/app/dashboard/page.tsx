@@ -4,52 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-interface DashboardData {
-  totalCards: number;
-  distinctCards: number;
-  totalEstimatedValue: number;
-  totalInvested: number;
-  gainLoss: number;
-  roi: number;
-  rawCount: number;
-  gradedCount: number;
-  forSaleCount: number;
-  watchlistCount: number;
-  topByValue: any[];
-  recentAdditions: any[];
-  bySport: Record<string, number>;
-  bySet: Record<string, number>;
-  byManufacturer: Record<string, number>;
-  byStorage: Record<string, number>;
-}
-
-const featureCards = [
-  { href: '/inventory', label: 'Inventory', desc: 'Manage individual cards and collectibles', icon: '📦', action: 'View Collection', countKey: 'totalCards' },
-  { href: '/inventory/import', label: 'Import Inventory', desc: 'Upload card lists from Ludex, Collectr, CollX, Cardly AI, or CSV', icon: '📥', action: 'Import', countKey: null },
-  { href: '/inventory/groups', label: 'Groups / Sets / Lots', desc: 'Manage sets, lots, binders, boxes, and sealed products', icon: '📁', action: 'View Groups', countKey: null },
-  { href: '/wishlist', label: 'Wishlist', desc: 'Track cards you want to acquire', icon: '⭐', action: 'View Wishlist', countKey: 'watchlistCount' },
-  { href: '/listings', label: 'Listings', desc: 'Create and manage items for sale', icon: '🏷️', action: 'View Listings', countKey: 'forSaleCount' },
-  { href: '/offers', label: 'Offers', desc: 'Review sent and received offers', icon: '🤝', action: 'View Offers', countKey: null },
-  { href: '/sales', label: 'Sales', desc: 'Track end-to-end sale transactions', icon: '💰', action: 'View Sales', countKey: null },
-  { href: '/sales/manual', label: 'Record External Sale', desc: 'Log sales from eBay, COMC, Facebook, card shows, or private deals', icon: '📝', action: 'Record Sale', countKey: null },
-  { href: '/transfers', label: 'Transfers', desc: 'Track ownership transfers between users', icon: '🔄', action: 'View Transfers', countKey: null },
-  { href: '/marketplace', label: 'Marketplace', desc: 'Browse and buy from other collectors', icon: '🛒', action: 'Browse Market', countKey: null },
-  { href: '/shipments', label: 'Shipments', desc: 'Track shipments after sales', icon: '📬', action: 'View Shipments', countKey: null },
-  { href: '/payments', label: 'Payments', desc: 'Track payment status', icon: '💳', action: 'View Payments', countKey: null },
-  { href: '/disputes', label: 'Disputes', desc: 'Resolve transaction issues', icon: '⚖️', action: 'View Disputes', countKey: null },
-  { href: '/notifications', label: 'Notifications', desc: 'Stay updated on activity and alerts', icon: '🔔', action: 'View All', countKey: null },
-  { href: '/analytics', label: 'Analytics', desc: 'Portfolio insights and value trends', icon: '📊', action: 'View Analytics', countKey: null },
-  { href: '/qr-labels', label: 'QR Labels', desc: 'Generate and print labels for your items', icon: '📱', action: 'Create Labels', countKey: null },
-  { href: '/activity', label: 'Account Activity', desc: 'View login history and account actions', icon: '📋', action: 'View Activity', countKey: null },
-  { href: '/feedback', label: 'Reputation / Feedback', desc: 'View your trust score and buyer/seller feedback', icon: '⭐', action: 'View Feedback', countKey: null },
-  { href: '/live', label: 'Collectiverse Live', desc: 'Run live sales, claim sales, breaks, and showcases', icon: '🔴', action: 'Go Live', countKey: null },
-  { href: '/live/studio', label: 'Live Studio', desc: 'Manage live events, auctions, claim sales, and breaks', icon: '🎬', action: 'Open Studio', countKey: null },
-  { href: '/live/my-activity', label: 'My Live Activity', desc: 'Track your claims, bids, break spots, and live purchases', icon: '🎯', action: 'View Activity', countKey: null },
-];
-
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [section, setSection] = useState<'collection' | 'selling' | 'live' | 'account'>('collection');
   const router = useRouter();
 
   useEffect(() => {
@@ -64,157 +22,124 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen py-12 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">My Dashboard</h1>
-          <Link href="/inventory/add" className="btn-primary text-sm">+ Add Collectible</Link>
+      <div className="max-w-5xl mx-auto">
+        {/* Summary Row */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+          <Stat value={`$${(data.totalEstimatedValue || 0).toLocaleString()}`} label="Collection Value" />
+          <Stat value={data.totalCards || 0} label="Total Items" />
+          <Stat value={data.forSaleCount || 0} label="Active Listings" />
+          <Stat value={(data.watchlistCount || 0)} label="Wishlist" />
+          <Stat value={`${data.roi || 0}%`} label="ROI" positive={data.roi >= 0} />
         </div>
 
-        {/* Primary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-          <StatCard value={data.totalCards} label="Total Cards" />
-          <StatCard value={data.distinctCards} label="Distinct Cards" />
-          <StatCard value={`$${data.totalEstimatedValue.toLocaleString()}`} label="Est. Value" />
-          <StatCard value={`$${data.totalInvested.toLocaleString()}`} label="Invested" />
-          <StatCard value={`${data.gainLoss >= 0 ? '+' : ''}$${data.gainLoss.toLocaleString()}`} label="Gain/Loss" positive={data.gainLoss >= 0} />
-          <StatCard value={`${data.roi}%`} label="ROI" positive={data.roi >= 0} />
+        {/* Primary Actions */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <Link href="/inventory/add/select-type" className="btn-primary text-sm">+ Add Collectible</Link>
+          <Link href="/inventory/import" className="btn-secondary text-sm">Import</Link>
+          <Link href="/listings/add" className="btn-secondary text-sm">Create Listing</Link>
+          <Link href="/sales/manual" className="btn-secondary text-sm">External Sale</Link>
+          <Link href="/live/create" className="btn-secondary text-sm">Start Live</Link>
+          <Link href="/analytics" className="btn-secondary text-sm">Analytics</Link>
         </div>
 
-        {/* Feature Cards */}
-        <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-          {featureCards.map((card) => (
-            <FeatureCard
-              key={card.href}
-              href={card.href}
-              label={card.label}
-              desc={card.desc}
-              icon={card.icon}
-              action={card.action}
-              count={card.countKey ? (data as any)[card.countKey] : undefined}
-            />
+        {/* Needs Attention */}
+        <NeedsAttention data={data} />
+
+        {/* Grouped Sections */}
+        <div className="flex gap-2 mb-4 mt-6 overflow-x-auto">
+          {(['collection', 'selling', 'live', 'account'] as const).map(s => (
+            <button key={s} onClick={() => setSection(s)} className={`px-4 py-2 rounded-lg text-sm capitalize whitespace-nowrap transition-colors ${section === s ? 'bg-electric text-white' : 'bg-gunmetal/50 text-silver hover:text-white'}`}>{s}</button>
           ))}
         </div>
 
-        {/* Secondary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="card-surface p-4 text-center">
-            <p className="text-xl font-bold">{data.rawCount}</p>
-            <p className="text-silver text-xs">Raw</p>
+        {section === 'collection' && (
+          <div className="card-surface p-5 space-y-2">
+            <QuickLink href="/inventory" label="Inventory" desc="All owned items" />
+            <QuickLink href="/inventory/groups" label="Groups / Lots / Sets" desc="Sealed, binders, lots" />
+            <QuickLink href="/wishlist" label="Wishlist" desc="Target acquisitions" />
+            <QuickLink href="/analytics" label="Analytics" desc="Portfolio insights" />
+            <QuickLink href="/qr-labels" label="QR Labels" desc="Print labels" />
+            <QuickLink href="/checklists" label="Checklists" desc="Set completion" />
           </div>
-          <div className="card-surface p-4 text-center">
-            <p className="text-xl font-bold">{data.gradedCount}</p>
-            <p className="text-silver text-xs">Graded</p>
-          </div>
-          <div className="card-surface p-4 text-center">
-            <p className="text-xl font-bold">{data.forSaleCount}</p>
-            <p className="text-silver text-xs">For Sale</p>
-          </div>
-          <div className="card-surface p-4 text-center">
-            <p className="text-xl font-bold">{data.watchlistCount}</p>
-            <p className="text-silver text-xs">Watchlist</p>
-          </div>
-        </div>
+        )}
 
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          {/* Top by Value */}
-          <div className="card-surface p-6">
-            <h2 className="text-lg font-semibold mb-4">Top 10 by Value</h2>
-            {data.topByValue.length === 0 ? (
-              <p className="text-silver text-sm">No items yet. <Link href="/cards" className="text-electric hover:underline">Browse cards</Link></p>
-            ) : (
-              <div className="space-y-2">
-                {data.topByValue.map((item: any) => (
-                  <Link key={item.id} href={`/inventory/${item.id}`} className="flex justify-between items-center py-2 border-b border-silver/10 last:border-0 hover:bg-silver/5 px-2 rounded transition-colors">
-                    <div>
-                      <p className="text-sm font-medium">{item.playerName}</p>
-                      <p className="text-xs text-silver">{item.setName} #{item.cardNumber} {item.gradeValue && `• ${item.condition} ${item.gradeValue}`}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-electric font-bold text-sm">${item.estimatedValue?.toLocaleString()}</span>
-                      {item.purchasePrice && <p className="text-xs text-silver">Cost: ${item.purchasePrice.toLocaleString()}</p>}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
+        {section === 'selling' && (
+          <div className="card-surface p-5 space-y-2">
+            <QuickLink href="/listings" label="Listings" desc="Active and draft listings" />
+            <QuickLink href="/offers" label="Offers" desc="Sent and received" />
+            <QuickLink href="/sales" label="Sales" desc="All transactions" />
+            <QuickLink href="/sales/manual" label="Record External Sale" desc="eBay, COMC, Facebook, etc." />
+            <QuickLink href="/shipments" label="Shipments" desc="Tracking and delivery" />
+            <QuickLink href="/payments" label="Payments" desc="Payment status" />
+            <QuickLink href="/disputes" label="Disputes" desc="Issue resolution" />
+            <QuickLink href="/feedback" label="Feedback" desc="Reputation" />
           </div>
+        )}
 
-          {/* Recent Additions */}
-          <div className="card-surface p-6">
-            <h2 className="text-lg font-semibold mb-4">Recent Additions</h2>
-            {data.recentAdditions.length === 0 ? (
-              <p className="text-silver text-sm">Nothing added yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {data.recentAdditions.map((item: any) => (
-                  <Link key={item.id} href={`/inventory/${item.id}`} className="flex justify-between items-center py-2 border-b border-silver/10 last:border-0 hover:bg-silver/5 px-2 rounded transition-colors">
-                    <div>
-                      <p className="text-sm font-medium">{item.playerName}</p>
-                      <p className="text-xs text-silver">{item.setName} #{item.cardNumber}</p>
-                    </div>
-                    <span className="text-xs text-silver">{new Date(item.addedAt).toLocaleDateString()}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
+        {section === 'live' && (
+          <div className="card-surface p-5 space-y-2">
+            <QuickLink href="/live/studio" label="Live Studio" desc="Manage your events" />
+            <QuickLink href="/live/my-activity" label="My Live Activity" desc="Claims, bids, spots" />
+            <QuickLink href="/live" label="Browse Live" desc="Live now + upcoming" />
+            <QuickLink href="/live/create" label="Create Event" desc="New live sale or break" />
           </div>
-        </div>
+        )}
 
-        {/* Breakdowns */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Breakdown title="By Sport" data={data.bySport} />
-          <Breakdown title="By Set" data={data.bySet} />
-          <Breakdown title="By Manufacturer" data={data.byManufacturer} />
-          <Breakdown title="By Storage" data={data.byStorage} />
-        </div>
+        {section === 'account' && (
+          <div className="card-surface p-5 space-y-2">
+            <QuickLink href="/notifications" label="Notifications" desc="Alerts and updates" />
+            <QuickLink href="/account/shipping-addresses" label="Shipping Addresses" desc="Manage addresses" />
+            <QuickLink href="/activity" label="Activity" desc="Account history" />
+            <QuickLink href="/account" label="Profile" desc="Settings" />
+          </div>
+        )}
+
+        {/* Top by Value */}
+        {data.topByValue?.length > 0 && (
+          <div className="card-surface p-5 mt-6">
+            <h3 className="font-semibold text-sm mb-3">Top Items by Value</h3>
+            <div className="space-y-2">
+              {data.topByValue.slice(0, 5).map((item: any) => (
+                <Link key={item.id} href={`/inventory/${item.id}`} className="flex justify-between items-center py-1.5 border-b border-silver/10 last:border-0 hover:bg-silver/5 px-2 rounded transition-colors">
+                  <div><p className="text-sm">{item.playerName}</p><p className="text-xs text-silver">{item.setName} #{item.cardNumber}</p></div>
+                  <span className="text-electric font-bold text-sm">${item.estimatedValue?.toLocaleString()}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
 }
 
-function StatCard({ value, label, positive }: { value: string | number; label: string; positive?: boolean }) {
-  const colorClass = positive === undefined ? 'text-electric' : positive ? 'text-green-400' : 'text-red-400';
-  return (
-    <div className="card-surface p-4 text-center">
-      <p className={`text-2xl font-bold ${colorClass}`}>{value}</p>
-      <p className="text-silver text-xs">{label}</p>
-    </div>
-  );
+function Stat({ value, label, positive }: { value: string | number; label: string; positive?: boolean }) {
+  const color = positive === undefined ? 'text-electric' : positive ? 'text-green-400' : 'text-red-400';
+  return <div className="card-surface p-3 text-center"><p className={`text-lg font-bold ${color}`}>{value}</p><p className="text-xs text-silver">{label}</p></div>;
 }
 
-function FeatureCard({ href, label, desc, icon, action, count }: {
-  href: string; label: string; desc: string; icon: string; action: string; count?: number;
-}) {
+function QuickLink({ href, label, desc }: { href: string; label: string; desc: string }) {
   return (
-    <Link href={href} className="card-surface p-4 hover:border-electric/30 transition-colors group flex flex-col justify-between">
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xl">{icon}</span>
-          {count !== undefined && <span className="text-xs bg-electric/15 text-electric px-2 py-0.5 rounded-full font-medium">{count}</span>}
-        </div>
-        <p className="font-medium text-sm group-hover:text-electric transition-colors">{label}</p>
-        <p className="text-xs text-silver mt-1">{desc}</p>
-      </div>
-      <p className="text-xs text-electric mt-3 opacity-0 group-hover:opacity-100 transition-opacity">{action} →</p>
+    <Link href={href} className="flex justify-between items-center py-2 px-2 rounded-lg hover:bg-silver/5 transition-colors">
+      <div><p className="text-sm font-medium">{label}</p><p className="text-xs text-silver">{desc}</p></div>
+      <span className="text-xs text-silver">→</span>
     </Link>
   );
 }
 
-function Breakdown({ title, data }: { title: string; data: Record<string, number> }) {
-  const entries = Object.entries(data || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  if (entries.length === 0) return null;
-  return (
-    <div className="card-surface p-5">
-      <h3 className="font-semibold text-sm mb-3">{title}</h3>
-      <div className="space-y-1.5">
-        {entries.map(([key, count]) => (
-          <div key={key} className="flex justify-between text-xs">
-            <span className="text-silver truncate mr-2">{key}</span>
-            <span className="text-white font-medium">{count}</span>
-          </div>
-        ))}
-      </div>
+function NeedsAttention({ data }: { data: any }) {
+  const items: { label: string; href: string; count?: number }[] = [];
+  if (data.forSaleCount > 0) items.push({ label: 'Active listings', href: '/listings', count: data.forSaleCount });
+  // These would come from a dedicated API in production
+  return items.length > 0 ? (
+    <div className="card-surface p-4 border-amber-400/20 border">
+      <p className="text-xs text-amber-400 font-semibold uppercase tracking-wider mb-2">Needs Attention</p>
+      {items.map((item, i) => (
+        <Link key={i} href={item.href} className="flex justify-between items-center py-1.5 text-sm hover:bg-silver/5 rounded px-2 transition-colors">
+          <span>{item.label}</span>
+          {item.count && <span className="badge bg-amber-400/20 text-amber-400 text-xs">{item.count}</span>}
+        </Link>
+      ))}
     </div>
-  );
+  ) : null;
 }

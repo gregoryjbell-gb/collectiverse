@@ -63,6 +63,11 @@ export default function GroupDetailPage() {
               {group.sealed && <button onClick={handleOpen} className="btn-secondary text-xs">Open / Break</button>}
               <Link href={`/inventory/groups/${id}/edit`} className="btn-primary text-xs">Edit</Link>
               <Link href={`/listings/add?groupId=${id}`} className="btn-secondary text-xs">Create Listing</Link>
+              <button onClick={async () => {
+                const res = await fetch('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ inventoryGroupId: id }) });
+                if (res.ok) { const d = await res.json(); router.push(`/sales/${d.sale.id}`); }
+                else { const d = await res.json(); alert(d.error || 'Failed to start sale'); }
+              }} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-green-400/10 text-green-400 hover:bg-green-400/20 transition-colors">Sell This</button>
               <Link href="/qr-labels" className="btn-secondary text-xs">QR Label</Link>
             </div>
           </div>

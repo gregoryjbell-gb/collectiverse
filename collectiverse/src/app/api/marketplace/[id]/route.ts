@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const listing = await (prisma as any).listing.findFirst({ where: { id: params.id, status: 'ACTIVE' } });
+  const listing = await (prisma as any).listing.findFirst({ where: { id: params.id, status: { in: ['ACTIVE', 'RESERVED'] } } });
   if (!listing) return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
 
   let itemData: any = null;
@@ -47,13 +47,16 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     listing: {
       id: listing.id,
       listingType: listing.listingType,
+      status: listing.status,
       price: listing.price,
       minimumOffer: listing.minimumOffer,
       allowOffers: listing.allowOffers,
       allowTrades: listing.allowTrades,
+      buyNowEnabled: listing.buyNowEnabled ?? true,
       description: listing.description,
       shippingNotes: listing.shippingNotes,
       createdAt: listing.createdAt,
+      sellerId: listing.userId,
       seller: seller?.displayName || seller?.username || 'Seller',
       item: itemData,
     },

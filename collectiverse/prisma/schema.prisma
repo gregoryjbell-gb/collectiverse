@@ -422,11 +422,13 @@ model Listing {
   inventoryItemId  String?   @map("inventory_item_id")
   inventoryGroupId String?   @map("inventory_group_id")
   listingType      String    @map("listing_type") // ITEM, GROUP
-  status           String    @default("DRAFT") // DRAFT, ACTIVE, PAUSED, SOLD, CANCELLED
+  status           String    @default("DRAFT") // DRAFT, ACTIVE, PAUSED, RESERVED, SOLD, CANCELLED
   price            Float?
   minimumOffer     Float?    @map("minimum_offer")
   allowOffers      Boolean   @default(false) @map("allow_offers")
   allowTrades      Boolean   @default(false) @map("allow_trades")
+  buyNowEnabled    Boolean   @default(true) @map("buy_now_enabled")
+  quantityAvailable Int      @default(1) @map("quantity_available")
   description      String?
   shippingNotes    String?   @map("shipping_notes")
   soldAt           DateTime? @map("sold_at")
@@ -663,6 +665,7 @@ model Sale {
   offerId          String?   @map("offer_id")
   inventoryItemId  String?   @map("inventory_item_id")
   inventoryGroupId String?   @map("inventory_group_id")
+  purchaseType     String    @default("OFFER") @map("purchase_type") // OFFER, BUY_NOW, PRIVATE_SALE
   status           String    @default("DRAFT") // DRAFT, LISTED, OFFER_RECEIVED, OFFER_ACCEPTED, PAYMENT_PENDING, PAYMENT_MARKED_PAID, READY_TO_SHIP, SHIPPED, DELIVERED, TRANSFER_PENDING, TRANSFER_COMPLETED, FEEDBACK_PENDING, COMPLETED, CANCELLED, DISPUTED
   salePrice        Float?    @map("sale_price")
   shippingPrice    Float?    @map("shipping_price")

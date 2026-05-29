@@ -25,6 +25,7 @@ function AddListingPage() {
     minimumOffer: '',
     allowOffers: false,
     allowTrades: false,
+    buyNowEnabled: true,
     description: '',
     shippingNotes: '',
     status: 'ACTIVE',
@@ -66,7 +67,8 @@ function AddListingPage() {
             <div><label className="text-sm text-silver block mb-1">Price ($)</label><input type="number" step="0.01" className="input-field" value={form.price} onChange={e => setForm({...form, price: e.target.value})} /></div>
             <div><label className="text-sm text-silver block mb-1">Min Offer ($)</label><input type="number" step="0.01" className="input-field" value={form.minimumOffer} onChange={e => setForm({...form, minimumOffer: e.target.value})} /></div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap">
+            <label className="flex items-center gap-2 text-sm text-silver cursor-pointer"><input type="checkbox" checked={form.buyNowEnabled} onChange={e => setForm({...form, buyNowEnabled: e.target.checked})} /> Enable Buy Now</label>
             <label className="flex items-center gap-2 text-sm text-silver cursor-pointer"><input type="checkbox" checked={form.allowOffers} onChange={e => setForm({...form, allowOffers: e.target.checked})} /> Allow Offers</label>
             <label className="flex items-center gap-2 text-sm text-silver cursor-pointer"><input type="checkbox" checked={form.allowTrades} onChange={e => setForm({...form, allowTrades: e.target.checked})} /> Allow Trades</label>
           </div>

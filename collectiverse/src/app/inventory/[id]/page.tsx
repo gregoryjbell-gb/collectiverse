@@ -127,6 +127,11 @@ export default function InventoryDetailPage() {
             <div className="flex flex-wrap gap-2">
               <Link href={`/inventory/${item.id}/edit`} className="btn-primary text-sm">Edit</Link>
               <Link href={`/listings/add?itemId=${item.id}`} className="btn-secondary text-sm">Create Listing</Link>
+              <button onClick={async () => {
+                const res = await fetch('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ inventoryItemId: item.id }) });
+                if (res.ok) { const d = await res.json(); router.push(`/sales/${d.sale.id}`); }
+                else { const d = await res.json(); alert(d.error || 'Failed to start sale'); }
+              }} className="px-4 py-2 rounded-lg text-sm font-medium bg-green-400/10 text-green-400 hover:bg-green-400/20 transition-colors">Sell This</button>
               <Link href={`/qr-labels`} className="btn-secondary text-sm">QR Label</Link>
               <button onClick={() => { if (confirm('Delete?')) { fetch(`/api/inventory/${item.id}`, { method: 'DELETE' }).then(() => router.push('/inventory')); } }} className="btn-danger text-sm">Delete</button>
             </div>

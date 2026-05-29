@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   try { userId = await ensureUserId(session); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
 
   const data = await req.json();
-  const { inventoryItemId, inventoryGroupId, listingType, price, minimumOffer, allowOffers, allowTrades, description, shippingNotes, status } = data;
+  const { inventoryItemId, inventoryGroupId, listingType, price, minimumOffer, allowOffers, allowTrades, buyNowEnabled, description, shippingNotes, status } = data;
 
   if (!listingType || !['ITEM', 'GROUP'].includes(listingType)) {
     return NextResponse.json({ error: 'listingType must be ITEM or GROUP' }, { status: 400 });
@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
       minimumOffer: minimumOffer ? parseFloat(minimumOffer) : null,
       allowOffers: allowOffers || false,
       allowTrades: allowTrades || false,
+      buyNowEnabled: buyNowEnabled !== undefined ? buyNowEnabled : true,
       description: description || null,
       shippingNotes: shippingNotes || null,
     },

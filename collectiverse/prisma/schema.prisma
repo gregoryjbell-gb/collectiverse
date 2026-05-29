@@ -773,3 +773,40 @@ model ImportBatch {
   @@index([userId])
   @@map("import_batches")
 }
+
+model DataSource {
+  id               String   @id @default(cuid())
+  name             String   @unique
+  url              String?
+  description      String?
+  sourceType       String   @map("source_type") // PUBLIC_CHECKLIST, LICENSED_DATA, USER_UPLOAD, ADMIN_RESEARCH
+  trustScore       Float    @default(0.5) @map("trust_score")
+  sourceReliability String  @default("MEDIUM") @map("source_reliability") // LOW, MEDIUM, HIGH, OFFICIAL
+  sourceCategory   String   @default("OTHER") @map("source_category") // MANUFACTURER, PUBLIC_CHECKLIST, GRADING_COMPANY, MARKETPLACE, USER_SUBMISSION, ADMIN_RESEARCH, OTHER
+  permissionStatus String   @default("PUBLIC_FACTS_ONLY") @map("permission_status")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  facts CardFact[]
+
+  @@map("data_sources")
+}
+
+model CardFact {
+  id                 String   @id @default(cuid())
+  cardId             String   @map("card_id")
+  fieldName          String   @map("field_name")
+  fieldValue         String   @map("field_value")
+  sourceId           String   @map("source_id")
+  confidenceScore    Float    @default(0.5) @map("confidence_score")
+  verificationStatus String   @default("UNVERIFIED") @map("verification_status") // UNVERIFIED, SOURCE_SUPPORTED, MULTI_SOURCE_VERIFIED, ADMIN_VERIFIED, CONFLICTED
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  source DataSource @relation(fields: [sourceId], references: [id])
+
+  @@index([cardId])
+  @@index([cardId, fieldName])
+  @@index([verificationStatus])
+  @@map("card_facts")
+}

@@ -25,6 +25,7 @@ interface DashboardData {
 
 const featureCards = [
   { href: '/inventory', label: 'Inventory', desc: 'Manage individual cards and collectibles', icon: '📦', action: 'View Collection', countKey: 'totalCards' },
+  { href: '/inventory/import', label: 'Import Inventory', desc: 'Upload card lists from Ludex, Collectr, CollX, Cardly AI, or CSV', icon: '📥', action: 'Import', countKey: null },
   { href: '/inventory/groups', label: 'Groups / Sets / Lots', desc: 'Manage sets, lots, binders, boxes, and sealed products', icon: '📁', action: 'View Groups', countKey: null },
   { href: '/wishlist', label: 'Wishlist', desc: 'Track cards you want to acquire', icon: '⭐', action: 'View Wishlist', countKey: 'watchlistCount' },
   { href: '/listings', label: 'Listings', desc: 'Create and manage items for sale', icon: '🏷️', action: 'View Listings', countKey: 'forSaleCount' },

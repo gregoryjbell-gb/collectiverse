@@ -15,6 +15,7 @@ const publicLinks = [
 const collectionLinks = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/inventory', label: 'My Collection' },
+  { href: '/inventory/import', label: 'Import Inventory' },
   { href: '/inventory/groups', label: 'Groups / Sets / Lots' },
   { href: '/wishlist', label: 'Wishlist' },
   { href: '/analytics', label: 'Analytics' },

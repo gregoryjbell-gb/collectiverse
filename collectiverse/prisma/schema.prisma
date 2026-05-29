@@ -1645,3 +1645,72 @@ model CollectibleType {
 
   @@map("collectible_types")
 }
+
+model BlogPost {
+  id               String    @id @default(cuid())
+  title            String
+  slug             String    @unique
+  excerpt          String?
+  body             String?
+  status           String    @default("draft") // draft, published, archived
+  authorId         String    @map("author_id")
+  featuredImageUrl  String?  @map("featured_image_url")
+  seoTitle         String?   @map("seo_title")
+  seoDescription   String?   @map("seo_description")
+  publishedAt      DateTime? @map("published_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  categories BlogPostCategory[]
+  tags       BlogPostTag[]
+
+  @@index([status, publishedAt])
+  @@map("blog_posts")
+}
+
+model BlogCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  posts BlogPostCategory[]
+
+  @@map("blog_categories")
+}
+
+model BlogPostCategory {
+  id             String @id @default(cuid())
+  blogPostId     String @map("blog_post_id")
+  blogCategoryId String @map("blog_category_id")
+
+  post     BlogPost     @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  category BlogCategory @relation(fields: [blogCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([blogPostId, blogCategoryId])
+  @@map("blog_post_categories")
+}
+
+model BlogTag {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
+  posts BlogPostTag[]
+
+  @@map("blog_tags")
+}
+
+model BlogPostTag {
+  id         String @id @default(cuid())
+  blogPostId String @map("blog_post_id")
+  blogTagId  String @map("blog_tag_id")
+
+  post BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  tag  BlogTag  @relation(fields: [blogTagId], references: [id], onDelete: Cascade)
+
+  @@unique([blogPostId, blogTagId])
+  @@map("blog_post_tags")
+}

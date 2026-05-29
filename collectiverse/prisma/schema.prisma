@@ -810,3 +810,38 @@ model CardFact {
   @@index([verificationStatus])
   @@map("card_facts")
 }
+
+model CardIdentity {
+  id                   String   @id @default(cuid())
+  canonicalCardId      String   @unique @map("canonical_card_id")
+  fingerprint          String   @unique
+  normalizedFingerprint String  @unique @map("normalized_fingerprint")
+  year                 Int?
+  manufacturer         String?
+  brand                String?
+  setName              String?  @map("set_name")
+  cardNumber           String?  @map("card_number")
+  subjectName          String?  @map("subject_name")
+  parallel             String?
+  variation            String?
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@index([normalizedFingerprint])
+  @@index([year, manufacturer, setName, cardNumber])
+  @@map("card_identities")
+}
+
+model CardSource {
+  id             String   @id @default(cuid())
+  cardId         String   @map("card_id")
+  sourceId       String?  @map("source_id")
+  sourceRecordId String?  @map("source_record_id")
+  sourceName     String   @map("source_name")
+  sourceUrl      String?  @map("source_url")
+  importedAt     DateTime @default(now()) @map("imported_at")
+
+  @@index([cardId])
+  @@index([sourceId])
+  @@map("card_sources")
+}

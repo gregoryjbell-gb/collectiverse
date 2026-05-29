@@ -1489,10 +1489,17 @@ model Collectible {
   collectibleType String   @map("collectible_type") // SPORTS_CARD, TCG_CARD, NON_SPORTS_CARD, COMIC_BOOK, SEALED_PRODUCT, MEMORABILIA, TICKET, COIN, VIDEO_GAME, OTHER
   title           String
   subtitle        String?
+  slug            String?  @unique
   year            Int?
   manufacturer    String?
   franchise       String?
   primaryImageUrl String?  @map("primary_image_url")
+  publicSummary   String?  @map("public_summary")
+  publicImageAttribution String? @map("public_image_attribution")
+  sourceUrl       String?  @map("source_url")
+  marketLow       Float?   @map("market_low")
+  marketHigh      Float?   @map("market_high")
+  marketLastUpdatedAt DateTime? @map("market_last_updated_at")
   status          String   @default("ACTIVE") // ACTIVE, NEEDS_REVIEW, ARCHIVED
   cardId          String?  @unique @map("card_id")
   comicIssueId    String?  @unique @map("comic_issue_id")

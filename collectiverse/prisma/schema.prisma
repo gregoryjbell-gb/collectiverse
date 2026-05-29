@@ -845,3 +845,45 @@ model CardSource {
   @@index([sourceId])
   @@map("card_sources")
 }
+
+model ImportConnector {
+  id                 String   @id @default(cuid())
+  name               String
+  connectorType      String   @map("connector_type") // CSV, EXCEL, JSON, MANUAL, OCR_REVIEWED, WEB_CHECKLIST, API
+  status             String   @default("ACTIVE") // ACTIVE, PAUSED, DISABLED
+  defaultDataSourceId String? @map("default_data_source_id")
+  configJson         String?  @map("config_json") // JSON: field mappings, defaults, etc.
+  createdByAdminId   String   @map("created_by_admin_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  jobs ImportJob[]
+
+  @@map("import_connectors")
+}
+
+model ImportJob {
+  id                String    @id @default(cuid())
+  connectorId       String    @map("connector_id")
+  dataSourceId      String?   @map("data_source_id")
+  status            String    @default("QUEUED") // QUEUED, RUNNING, PREVIEW_READY, IMPORTED, FAILED, CANCELLED
+  inputFileUrl      String?   @map("input_file_url")
+  inputUrl          String?   @map("input_url")
+  totalRecords      Int       @default(0) @map("total_records")
+  validRecords      Int       @default(0) @map("valid_records")
+  duplicateRecords  Int       @default(0) @map("duplicate_records")
+  conflictedRecords Int       @default(0) @map("conflicted_records")
+  errorRecords      Int       @default(0) @map("error_records")
+  previewData       String?   @map("preview_data") // JSON preview of first N records
+  importBatchId     String?   @map("import_batch_id")
+  errors            String?   // JSON array
+  startedAt         DateTime? @map("started_at")
+  completedAt       DateTime? @map("completed_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  connector ImportConnector @relation(fields: [connectorId], references: [id])
+
+  @@index([connectorId])
+  @@index([status])
+  @@map("import_jobs")
+}

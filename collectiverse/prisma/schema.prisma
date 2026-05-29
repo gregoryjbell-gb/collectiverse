@@ -1868,3 +1868,20 @@ model BillingHistory {
   @@index([userId])
   @@map("billing_history")
 }
+
+model Storefront {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  slug        String   @unique
+  displayName String   @map("display_name")
+  tagline     String?
+  description String?
+  logoUrl     String?  @map("logo_url")
+  bannerUrl   String?  @map("banner_url")
+  status      String   @default("DRAFT") // DRAFT, ACTIVE, PAUSED
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("storefronts")
+}

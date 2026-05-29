@@ -1390,3 +1390,21 @@ model LiveEventRecap {
 
   @@map("live_event_recaps")
 }
+
+model InventoryReservation {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  inventoryItemId  String?   @map("inventory_item_id")
+  inventoryGroupId String?   @map("inventory_group_id")
+  reservedForType  String    @map("reserved_for_type") // LISTING, SALE, LIVE_EVENT, LIVE_CLAIM, LIVE_AUCTION, TRANSFER, EXTERNAL_SALE
+  reservedForId    String    @map("reserved_for_id")
+  status           String    @default("ACTIVE") // ACTIVE, RELEASED, EXPIRED, CONVERTED
+  expiresAt        DateTime? @map("expires_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  releasedAt       DateTime? @map("released_at")
+
+  @@index([inventoryItemId, status])
+  @@index([inventoryGroupId, status])
+  @@index([userId])
+  @@map("inventory_reservations")
+}

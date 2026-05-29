@@ -28,6 +28,7 @@ const sellingLinks = [
   { href: '/offers', label: 'Offers' },
   { href: '/sales', label: 'Sales' },
   { href: '/sales/manual', label: 'Record External Sale' },
+  { href: '/live/studio', label: 'Live Studio' },
   { href: '/live/create', label: 'Create Live Event' },
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/transfers', label: 'Transfers' },

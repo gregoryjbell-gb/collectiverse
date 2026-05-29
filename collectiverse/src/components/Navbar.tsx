@@ -98,7 +98,10 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-navy/95 backdrop-blur-md border-b border-silver/10">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-electric tracking-tight hover:opacity-90 transition-opacity">Collectiverse</Link>
+        <Link href="/atlas" className="flex items-center gap-2 hover:opacity-90 transition-opacity" aria-label="Go to Atlas comic strip">
+          <img src="/brand/collectiverse-logo.png" alt="Collectiverse" className="h-8 w-auto hidden sm:block" />
+          <span className="text-xl font-bold text-electric tracking-tight sm:hidden">Collectiverse</span>
+        </Link>
 
         {/* Desktop */}
         <div className="hidden lg:flex items-center gap-1" ref={dropdownRef}>

@@ -1121,3 +1121,20 @@ model InventoryImportRow {
   @@index([batchId])
   @@map("inventory_import_rows")
 }
+
+model PublicCardReview {
+  id                String    @id @default(cuid())
+  cardId            String    @map("card_id")
+  submittedByUserId String?   @map("submitted_by_user_id")
+  importBatchId     String?   @map("import_batch_id")
+  status            String    @default("PENDING") // PENDING, APPROVED, MERGED, REJECTED, NEEDS_MORE_INFO
+  reviewerAdminId   String?   @map("reviewer_admin_id")
+  adminNotes        String?   @map("admin_notes")
+  duplicateOfCardId String?   @map("duplicate_of_card_id")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  reviewedAt        DateTime? @map("reviewed_at")
+
+  @@index([cardId])
+  @@index([status])
+  @@map("public_card_reviews")
+}

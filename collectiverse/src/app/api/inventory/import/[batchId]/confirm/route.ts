@@ -104,6 +104,16 @@ export async function POST(req: NextRequest, { params }: { params: { batchId: st
       });
       createdCards++;
 
+      // Create review queue entry for admin
+      await (prisma as any).publicCardReview.create({
+        data: {
+          cardId: card.id,
+          submittedByUserId: userId,
+          importBatchId: params.batchId,
+          status: 'PENDING',
+        },
+      }).catch(() => {});
+
       // Create card identity
       await findOrCreateIdentity({
         cardId: card.id,

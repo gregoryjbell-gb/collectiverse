@@ -44,6 +44,7 @@ const trustLinks = [
 
 const adminLinks = [
   { href: '/admin', label: 'Admin Dashboard' },
+  { href: '/admin/card-reviews', label: 'Card Reviews' },
   { href: '/admin/import', label: 'Card Import' },
   { href: '/admin?tab=cards', label: 'Card Review' },
   { href: '/admin?tab=images', label: 'Image Review' },

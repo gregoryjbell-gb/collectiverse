@@ -1922,3 +1922,18 @@ model SubscriptionLimitException {
   @@index([userId, featureKey])
   @@map("subscription_limit_exceptions")
 }
+
+model UsageSnapshot {
+  id                 String   @id @default(cuid())
+  userId             String   @map("user_id")
+  inventoryItemCount Int      @default(0) @map("inventory_item_count")
+  activeListingCount Int      @default(0) @map("active_listing_count")
+  storageUsedBytes   BigInt   @default(0) @map("storage_used_bytes")
+  liveEventsThisMonth Int    @default(0) @map("live_events_this_month")
+  importsThisMonth   Int      @default(0) @map("imports_this_month")
+  snapshotDate       DateTime @map("snapshot_date")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@index([userId, snapshotDate])
+  @@map("usage_snapshots")
+}

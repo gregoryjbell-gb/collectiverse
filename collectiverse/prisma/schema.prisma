@@ -1773,3 +1773,35 @@ model ToyCollectible {
   @@index([name])
   @@map("toy_collectibles")
 }
+
+model MusicCollectible {
+  id                  String   @id @default(cuid())
+  collectibleId       String   @unique @map("collectible_id")
+  musicType           String   @map("music_type") // VINYL, CD, CASSETTE, BOX_SET, SINGLE, POSTER, TOUR_PROGRAM, SIGNED_ALBUM, MEMORABILIA, OTHER
+  artistName          String   @map("artist_name")
+  albumTitle          String?  @map("album_title")
+  releaseTitle        String?  @map("release_title")
+  label               String?
+  catalogNumber       String?  @map("catalog_number")
+  format              String?  // LP, 45 RPM, 33 RPM, 78 RPM, CD, cassette, box set
+  pressing            String?  // first pressing, reissue, promo, test pressing
+  country             String?
+  releaseYear         Int?     @map("release_year")
+  genre               String?
+  signed              Boolean  @default(false)
+  limitedEdition      Boolean  @default(false) @map("limited_edition")
+  coloredVinyl        Boolean  @default(false) @map("colored_vinyl")
+  variantName         String?  @map("variant_name")
+  upc                 String?
+  conditionMedia      String?  @map("condition_media")
+  conditionSleeve     String?  @map("condition_sleeve")
+  gradingCompany      String?  @map("grading_company")
+  gradeValue          String?  @map("grade_value")
+  certificationNumber String?  @map("certification_number")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@index([artistName])
+  @@index([albumTitle])
+  @@map("music_collectibles")
+}

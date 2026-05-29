@@ -1370,3 +1370,23 @@ model LiveEventUserStatus {
   @@unique([liveEventId, userId])
   @@map("live_event_user_statuses")
 }
+
+model LiveEventRecap {
+  id                    String   @id @default(cuid())
+  liveEventId           String   @unique @map("live_event_id")
+  sellerUserId          String   @map("seller_user_id")
+  totalItemsPresented   Int      @default(0) @map("total_items_presented")
+  totalItemsSold        Int      @default(0) @map("total_items_sold")
+  totalClaims           Int      @default(0) @map("total_claims")
+  totalAcceptedClaims   Int      @default(0) @map("total_accepted_claims")
+  totalBids             Int      @default(0) @map("total_bids")
+  grossSales            Float?   @map("gross_sales")
+  estimatedFees         Float?   @map("estimated_fees")
+  netSales              Float?   @map("net_sales")
+  totalBreakSpotsSold   Int?     @map("total_break_spots_sold")
+  notes                 String?
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("live_event_recaps")
+}

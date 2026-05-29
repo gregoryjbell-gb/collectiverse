@@ -1626,3 +1626,15 @@ model CoinCollectible {
   @@index([coinType])
   @@map("coin_collectibles")
 }
+
+model CollectibleType {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("collectible_types")
+}

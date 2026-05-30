@@ -1,162 +1,132 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { prisma } from '@/lib/prisma';
+import OnboardingChecklist from '@/components/OnboardingChecklist';
 
-export default async function HomePage() {
-  const featuredCards = await prisma.card.findMany({
-    where: { estimatedValue: { gt: 50 } },
-    include: { person: true, team: true, set: true },
-    orderBy: { estimatedValue: 'desc' },
-    take: 6,
-  });
+export default function HomePage() {
+  const [user, setUser] = useState<any>(null);
+  const [checked, setChecked] = useState(false);
 
-  const featuredPlayers = await prisma.person.findMany({
-    include: { personSports: { include: { sport: true } } },
-    take: 5,
-  });
+  useEffect(() => {
+    fetch('/api/me').then(r => r.ok ? r.json() : null).then(d => { if (d?.user) setUser(d.user); setChecked(true); }).catch(() => setChecked(true));
+  }, []);
 
+  if (!checked) return <main className="min-h-screen py-16 px-6"><div className="text-silver text-center">Loading...</div></main>;
+
+  if (user) return <AuthenticatedHome user={user} />;
+  return <PublicHome />;
+}
+
+function PublicHome() {
   return (
     <main className="min-h-screen">
       {/* Hero */}
-      <section className="relative overflow-hidden py-24 px-6 lg:py-36">
-        <div className="absolute inset-0 bg-gradient-to-br from-navy via-gunmetal/30 to-navy" />
-        <div className="relative max-w-5xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-            Transforming Trading Cards Into{' '}
-            <span className="text-electric">Interactive Collectibles</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-silver max-w-3xl mx-auto mb-10">
-            Every Card Has a Story.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/cards" className="btn-primary text-lg px-8 py-3">
-              Explore Cards
-            </Link>
-            <Link href="/players" className="btn-secondary text-lg px-8 py-3">
-              View Players
-            </Link>
-          </div>
+      <section className="py-20 px-6 text-center">
+        <img src="/brand/collectiverse-logo.png" alt="Collectiverse" className="mx-auto w-48 mb-6" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">Your Collection.<br />Your Universe.</h1>
+        <p className="text-silver text-lg max-w-2xl mx-auto mb-8">Track, buy, sell, and showcase sports cards, comics, coins, memorabilia, toys, vinyl, video games, and more — all in one place.</p>
+        <div className="flex gap-3 justify-center flex-wrap">
+          <Link href="/register" className="btn-primary text-lg px-8 py-3">Start Free</Link>
+          <Link href="/marketplace" className="btn-secondary text-lg px-8 py-3">Browse Marketplace</Link>
         </div>
       </section>
 
-      {/* QR Demo Section */}
-      <section className="py-20 px-6 bg-gunmetal/20">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">QR-Linked Card Identity</h2>
-          <p className="text-silver text-lg mb-8 max-w-2xl mx-auto">
-            Every physical card connects to a dynamic digital profile. Scan a QR code to instantly access card intelligence, grading data, and collector insights.
-          </p>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { title: 'Scan', desc: 'Point your camera at any Collectiverse QR code' },
-              { title: 'Discover', desc: 'Instant access to card data, history, and analytics' },
-              { title: 'Collect', desc: 'Track, grade, and manage your portfolio' },
-            ].map((step) => (
-              <div key={step.title} className="card-surface p-6">
-                <h3 className="text-xl font-semibold text-electric mb-2">{step.title}</h3>
-                <p className="text-silver">{step.desc}</p>
-              </div>
-            ))}
-          </div>
+      {/* Features */}
+      <section className="py-16 px-6 border-t border-silver/10">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
+          <FeatureBlock icon="📦" title="Track Everything" desc="Inventory management for cards, comics, coins, toys, vinyl, games, and memorabilia." />
+          <FeatureBlock icon="🛒" title="Buy & Sell" desc="Marketplace with offers, Buy Now, and full sale lifecycle tracking." />
+          <FeatureBlock icon="🔴" title="Go Live" desc="Host live sales, auctions, claim sales, and breaks with real-time chat." />
+          <FeatureBlock icon="📥" title="Import Anywhere" desc="Upload from Ludex, Collectr, CollX, Cardly AI, or any CSV." />
+          <FeatureBlock icon="📊" title="Analytics" desc="Portfolio value, profit/loss, ROI, and market trends." />
+          <FeatureBlock icon="🤖" title="Meet Atlas" desc="Your AI-powered guide through the Collectiverse." />
         </div>
       </section>
 
-      {/* Featured Cards */}
-      <section className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8">Featured Cards</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredCards.map((card) => (
-              <Link key={card.id} href={`/cards/${card.id}`} className="card-surface p-5 hover:border-electric/30 transition-colors group">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <p className="font-semibold group-hover:text-electric transition-colors">{card.person?.displayName}</p>
-                    <p className="text-sm text-silver">{card.set?.name} #{card.cardNumber}</p>
-                  </div>
-                  {card.estimatedValue && (
-                    <span className="text-electric font-bold">${card.estimatedValue.toLocaleString()}</span>
-                  )}
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {card.rookie && <span className="badge bg-amber-500/20 text-amber-400">Rookie</span>}
-                  {card.autograph && <span className="badge bg-purple-500/20 text-purple-400">Auto</span>}
-                  {card.parallel && <span className="badge bg-electric/20 text-electric">{card.parallel}</span>}
-                  <span className="badge bg-silver/10 text-silver">{card.team?.name}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Players */}
-      <section className="py-20 px-6 bg-gunmetal/20">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8">Featured Players</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredPlayers.map((player) => (
-              <Link key={player.id} href={`/players/${player.id}`} className="card-surface p-5 hover:border-electric/30 transition-colors group">
-                <p className="font-semibold text-lg group-hover:text-electric transition-colors">{player.displayName}</p>
-                <div className="flex gap-2 mt-2">
-                  {player.personSports.map((ps) => (
-                    <span key={ps.id} className="badge bg-electric/20 text-electric">{ps.sport.name}</span>
-                  ))}
-                  {player.hallOfFame && <span className="badge bg-amber-500/20 text-amber-400">HOF</span>}
-                </div>
-                {player.biography && (
-                  <p className="text-silver text-sm mt-3 line-clamp-2">{player.biography}</p>
-                )}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Platform Explanation */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">The Collectible Intelligence Platform</h2>
-          <p className="text-silver text-lg mb-12 max-w-3xl mx-auto">
-            Collectiverse connects physical trading cards to dynamic digital profiles with analytics, AI grading infrastructure, and collector tools.
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
-            {[
-              { title: 'Inventory', desc: 'Track every card with status, location, and value' },
-              { title: 'Analytics', desc: 'Portfolio valuation and market intelligence' },
-              { title: 'QR Identity', desc: 'Physical-to-digital card profiles via QR codes' },
-              { title: 'AI Ready', desc: 'Architecture for grading, OCR, and recommendations' },
-            ].map((f) => (
-              <div key={f.title} className="card-surface p-5">
-                <h3 className="font-semibold text-electric mb-1">{f.title}</h3>
-                <p className="text-silver text-sm">{f.desc}</p>
-              </div>
+      {/* Collectible Types */}
+      <section className="py-16 px-6 border-t border-silver/10">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-6">One Platform. Every Collectible.</h2>
+          <div className="flex flex-wrap gap-3 justify-center">
+            {['Sports Cards', 'Pokémon / TCG', 'Comics', 'Sealed Products', 'Memorabilia', 'Coins', 'Video Games', 'Toys & Figures', 'Vinyl & Music', 'Tickets'].map(t => (
+              <span key={t} className="badge bg-gunmetal/50 text-silver px-3 py-1.5">{t}</span>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-6 bg-gradient-to-r from-electric/10 to-transparent">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Start Building Your Digital Collection</h2>
-          <p className="text-silver mb-8">Every card has a story. Let Collectiverse tell it.</p>
-          <Link href="/cards" className="btn-primary text-lg px-8 py-3">
-            Browse the Vault
-          </Link>
+      <section className="py-16 px-6 border-t border-silver/10 text-center">
+        <h2 className="text-2xl font-bold mb-3">Ready to explore?</h2>
+        <p className="text-silver mb-6">Free forever for casual collectors. Upgrade when you need more.</p>
+        <div className="flex gap-3 justify-center">
+          <Link href="/register" className="btn-primary">Create Account</Link>
+          <Link href="/pricing" className="btn-secondary">View Plans</Link>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 px-6 border-t border-silver/10">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-silver text-sm">© 2024 Collectiverse. AI-Powered Collectible Intelligence.</p>
-          <nav className="flex gap-6 text-sm text-silver">
-            <Link href="/cards" className="hover:text-white transition-colors">Cards</Link>
-            <Link href="/players" className="hover:text-white transition-colors">Players</Link>
-            <Link href="/sets" className="hover:text-white transition-colors">Sets</Link>
-            <Link href="/admin" className="hover:text-white transition-colors">Admin</Link>
-          </nav>
-        </div>
-      </footer>
     </main>
   );
+}
+
+function AuthenticatedHome({ user }: { user: any }) {
+  return (
+    <main className="min-h-screen py-12 px-6">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-1">Welcome back, {user.displayName || user.username}</h1>
+        <p className="text-silver text-sm mb-6">What would you like to do today?</p>
+
+        <OnboardingChecklist />
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <QuickAction href="/inventory/add/select-type" icon="📦" label="Add Collectible" />
+          <QuickAction href="/inventory/import" icon="📥" label="Import" />
+          <QuickAction href="/inventory" icon="🗂️" label="My Inventory" />
+          <QuickAction href="/marketplace" icon="🛒" label="Marketplace" />
+          <QuickAction href="/listings/add" icon="🏷️" label="Create Listing" />
+          <QuickAction href="/live" icon="🔴" label="Live Events" />
+          <QuickAction href="/analytics" icon="📊" label="Analytics" />
+          <QuickAction href="/dashboard" icon="📋" label="Dashboard" />
+        </div>
+
+        {/* Role-specific */}
+        {user.role === 'ADMIN' && (
+          <div className="card-surface p-4 mb-4">
+            <p className="text-xs text-silver uppercase tracking-wider mb-2">Admin</p>
+            <div className="flex gap-2 flex-wrap">
+              <Link href="/admin" className="text-xs text-electric hover:underline">Dashboard</Link>
+              <Link href="/admin/card-reviews" className="text-xs text-electric hover:underline">Reviews</Link>
+              <Link href="/admin/system-health" className="text-xs text-electric hover:underline">Health</Link>
+              <Link href="/admin/import" className="text-xs text-electric hover:underline">Imports</Link>
+            </div>
+          </div>
+        )}
+
+        {/* Browse */}
+        <div className="card-surface p-4">
+          <p className="text-xs text-silver uppercase tracking-wider mb-2">Browse</p>
+          <div className="flex gap-3 flex-wrap">
+            <Link href="/cards" className="text-sm text-silver hover:text-electric">Cards</Link>
+            <Link href="/comics" className="text-sm text-silver hover:text-electric">Comics</Link>
+            <Link href="/sealed-products" className="text-sm text-silver hover:text-electric">Sealed</Link>
+            <Link href="/memorabilia" className="text-sm text-silver hover:text-electric">Memorabilia</Link>
+            <Link href="/coins" className="text-sm text-silver hover:text-electric">Coins</Link>
+            <Link href="/video-games" className="text-sm text-silver hover:text-electric">Games</Link>
+            <Link href="/toys" className="text-sm text-silver hover:text-electric">Toys</Link>
+            <Link href="/music" className="text-sm text-silver hover:text-electric">Music</Link>
+            <Link href="/collectibles" className="text-sm text-silver hover:text-electric">All</Link>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function FeatureBlock({ icon, title, desc }: { icon: string; title: string; desc: string }) {
+  return <div className="card-surface p-5 text-center"><span className="text-2xl block mb-2">{icon}</span><p className="font-medium text-sm">{title}</p><p className="text-xs text-silver mt-1">{desc}</p></div>;
+}
+
+function QuickAction({ href, icon, label }: { href: string; icon: string; label: string }) {
+  return <Link href={href} className="card-surface p-3 text-center hover:border-electric/30 transition-colors"><span className="text-lg block">{icon}</span><p className="text-xs text-silver mt-1">{label}</p></Link>;
 }

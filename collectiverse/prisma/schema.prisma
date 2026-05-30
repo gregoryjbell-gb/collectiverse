@@ -1973,3 +1973,18 @@ model OrganizationMember {
   @@index([userId])
   @@map("organization_members")
 }
+
+model UserOnboarding {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  stepKey     String    @map("step_key")
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
+  dismissed   Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, stepKey])
+  @@index([userId])
+  @@map("user_onboarding")
+}

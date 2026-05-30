@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Navbar />
         <div className="pt-16">
           {children}
+          <Footer />
         </div>
       </body>
     </html>

@@ -42,6 +42,7 @@ export default function Footer() {
             <Link href="/community-guidelines" className="block hover:text-white">Guidelines</Link>
             <Link href="/copyright" className="block hover:text-white">Copyright</Link>
             <Link href="/data-sources" className="block hover:text-white">Data Sources</Link>
+            <Link href="/report" className="block hover:text-white">Report Content</Link>
           </div>
         </div>
         <div>

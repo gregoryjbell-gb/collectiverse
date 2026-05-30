@@ -355,18 +355,27 @@ model InventoryTransaction {
 }
 
 model Report {
-  id           String   @id @default(cuid())
-  type         String   // INCORRECT_INFO, COPYRIGHT, OFFENSIVE, FAKE_SCAM, DUPLICATE
-  targetType   String   @map("target_type") // CARD, PLAYER, IMAGE, INVENTORY
-  targetId     String   @map("target_id")
-  reportedById String?  @map("reported_by_id")
-  reason       String
-  status       String   @default("OPEN") // OPEN, REVIEWING, RESOLVED, DISMISSED
-  resolvedById String?  @map("resolved_by_id")
-  resolvedAt   DateTime? @map("resolved_at")
-  resolution   String?
-  createdAt    DateTime @default(now()) @map("created_at")
+  id              String    @id @default(cuid())
+  type            String    // INCORRECT_INFO, COPYRIGHT, OFFENSIVE, FAKE_SCAM, DUPLICATE, FAKE_LISTING, COUNTERFEIT_CONCERN, MARKETPLACE_ISSUE, LIVE_EVENT_ABUSE, USER_BEHAVIOR, PRIVACY_CONCERN, OTHER
+  targetType      String    @map("target_type") // CARD, COLLECTIBLE, INVENTORY_ITEM, LISTING, MARKETPLACE_LISTING, LIVE_EVENT, LIVE_MESSAGE, USER, IMAGE, OTHER
+  targetId        String    @map("target_id")
+  reportedById    String?   @map("reported_by_id")
+  reporterName    String?   @map("reporter_name")
+  reporterEmail   String?   @map("reporter_email")
+  title           String?
+  reason          String
+  url             String?
+  evidenceUrl     String?   @map("evidence_url")
+  status          String    @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, NEEDS_MORE_INFO, RESOLVED, REJECTED, CLOSED
+  adminNotes      String?   @map("admin_notes")
+  resolvedById    String?   @map("resolved_by_id")
+  resolvedAt      DateTime? @map("resolved_at")
+  resolution      String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
+  @@index([status])
+  @@index([type])
   @@map("reports")
 }
 
